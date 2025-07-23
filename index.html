@@ -60,7 +60,6 @@
   <div id="result">💬 Results will appear here.</div>
   <div id="debug" hidden>🐞 Debug output</div>
 
-  <!-- ✅ JavaScript moved below all DOM elements -->
   <script>
     console.log("Script loaded—calculate() is defined.");
 
@@ -78,38 +77,43 @@
     }
 
     async function fetchFCF(sym) {
+      // Try annual cash-flow first
       try {
         const cfUrl = `https://finnhub.io/api/v1/stock/cash-flow?symbol=${sym}&period=annual&token=${apiKey}`;
         const cf = await fetchJSON(cfUrl);
-        const val = parseNum(cf.series?.[0]?.freeCashFlow);
+        const val = parseNum(cf.series?.annual?.[0]?.freeCashFlow);
         if (val !== null) return { value: val, label: "Free Cash Flow (Annual)" };
       } catch {}
 
+      // Fallback to TTM metrics
       const mUrl = `https://finnhub.io/api/v1/stock/metric?symbol=${sym}&metric=all&token=${apiKey}`;
       const md = await fetchJSON(mUrl);
       const cands = {
         "Free Cash Flow (TTM)": parseNum(md.metric.freeCashFlowTTM),
-        "Net Income (TTM)"   : parseNum(md.metric.netIncomeTTM),
-        "EBITDA (TTM)"       : parseNum(md.metric.ebitdaTTM)
+        "Net Income (TTM)"     : parseNum(md.metric.netIncomeTTM),
+        "EBITDA (TTM)"         : parseNum(md.metric.ebitdaTTM)
       };
-      for (let [lbl, v] of Object.entries(cands)) {
-        if (v !== null) return { value: v, label: lbl };
+      for (let [label, val] of Object.entries(cands)) {
+        if (val !== null) return { value: val, label };
       }
       throw new Error("No usable metrics found");
     }
 
     async function calculate() {
       const t = document.getElementById("ticker").value.trim().toUpperCase();
-      const g = parseNum(document.getElementById("growth").value)  / 100;
+      const g = parseNum(document.getElementById("growth").value) / 100;
       const p = parseNum(document.getElementById("pe").value);
-      const d = parseNum(document.getElementById("discount").value)/ 100;
+      const d = parseNum(document.getElementById("discount").value) / 100;
       const n = parseInt(document.getElementById("years").value, 10);
       const res = document.getElementById("result");
       const dbg = document.getElementById("debug");
       dbg.hidden = true;
       res.textContent = "⏳ Fetching…";
 
-      if (!t) return res.textContent = "⚠️ Please enter a ticker.";
+      if (!t) {
+        res.textContent = "⚠️ Please enter a ticker.";
+        return;
+      }
 
       try {
         const { value, label } = await fetchFCF(t);
@@ -119,12 +123,12 @@
           pv  += fcf / Math.pow(1 + d, i);
         }
         const term = (fcf * p) / Math.pow(1 + d, n);
-        const iv   = pv + term;
+        const iv = pv + term;
 
         res.innerHTML = `
           ✅ <strong>${t}</strong><br>
           🔍 Metric Used: <em>${label}</em><br>
-          💰 Intrinsic Value: <strong>$${(iv/1e9).toFixed(2)}B</strong>
+          💰 Intrinsic Value: <strong>$${(iv / 1e9).toFixed(2)}B</strong>
         `;
       } catch (err) {
         res.textContent = "⚠️ " + err.message;
