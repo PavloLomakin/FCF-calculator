@@ -4,8 +4,17 @@
   <meta charset="UTF-8">
   <title>Intrinsic Value Calculator</title>
   <style>
-    body { font-family: Arial; margin: 40px auto; max-width: 600px; background: #fafafa; }
-    label { display: block; margin-top: 1em; font-weight: bold; }
+    body {
+      font-family: Arial;
+      margin: 40px auto;
+      max-width: 600px;
+      background: #fafafa;
+    }
+    label {
+      display: block;
+      margin-top: 1em;
+      font-weight: bold;
+    }
     input, button {
       width: 100%;
       padding: 8px;
@@ -19,7 +28,9 @@
       border: none;
       cursor: pointer;
     }
-    button:hover { background: #005fa3; }
+    button:hover {
+      background: #005fa3;
+    }
     #result {
       margin-top: 1.5em;
       padding: 1em;
@@ -61,8 +72,6 @@
   <div id="debug" hidden>🐞 Debug output</div>
 
   <script>
-    console.log("Script loaded—calculate() is defined.");
-
     const apiKey = "d0kuab9r01qhb02558rgd0kuab9r01qhb02558s0";
 
     async function fetchJSON(url) {
@@ -82,7 +91,9 @@
         const cfUrl = `https://finnhub.io/api/v1/stock/cash-flow?symbol=${sym}&period=annual&token=${apiKey}`;
         const cf = await fetchJSON(cfUrl);
         const val = parseNum(cf.series?.annual?.[0]?.freeCashFlow);
-        if (val !== null) return { value: val, label: "Free Cash Flow (Annual)" };
+        if (val !== null) {
+          return { value: val, label: "Free Cash Flow (Annual)" };
+        }
       } catch {}
 
       // Fallback to TTM metrics
@@ -120,7 +131,7 @@
         let fcf = value, pv = 0;
         for (let i = 1; i <= n; i++) {
           fcf *= 1 + g;
-          pv  += fcf / Math.pow(1 + d, i);
+          pv += fcf / Math.pow(1 + d, i);
         }
         const term = (fcf * p) / Math.pow(1 + d, n);
         const iv = pv + term;
