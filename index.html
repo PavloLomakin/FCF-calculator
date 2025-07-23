@@ -12,8 +12,13 @@
 </head>
 <body>
   <h1>Intrinsic Value Calculator</h1>
+
   <label for="symbol">Enter Stock Symbol:</label>
   <input type="text" id="symbol" placeholder="e.g., AAPL">
+
+  <label for="growth">Estimated Annual Growth Rate (%):</label>
+  <input type="number" id="growth" placeholder="e.g., 8">
+
   <button onclick="calculateIntrinsicValue()">Calculate</button>
   <div class="output" id="result"></div>
 
@@ -22,23 +27,24 @@
 
     async function calculateIntrinsicValue() {
       const symbol = document.getElementById("symbol").value.toUpperCase();
+      const growthInput = parseFloat(document.getElementById("growth").value) / 100;
       const resultDiv = document.getElementById("result");
 
       try {
-        // Get stock profile for name and other info
+        // Fetch stock profile
         const profileResponse = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${API_KEY}`);
         const profile = await profileResponse.json();
 
-        // Get financials - using EPS and growth as proxies
+        // Fetch financial metrics
         const metricsResponse = await fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${API_KEY}`);
         const metrics = await metricsResponse.json();
 
         const eps = metrics.metric["epsTTM"] || 0;
-        const growthRate = metrics.metric["growthQuarterlyYOY"] || 0.05;
+        const growthRate = isNaN(growthInput) ? metrics.metric["growthQuarterlyYOY"] || 0.05 : growthInput;
         const discountRate = 0.10;
         const years = 5;
 
-        // DCF Calculation
+        // DCF calculation
         let intrinsicValue = 0;
         for (let i = 1; i <= years; i++) {
           intrinsicValue += (eps * Math.pow(1 + growthRate, i)) / Math.pow(1 + discountRate, i);
@@ -46,13 +52,14 @@
 
         resultDiv.innerHTML = `
           <strong>${profile.name || symbol}</strong><br>
-          Current EPS: ${eps.toFixed(2)}<br>
-          Estimated Growth Rate: ${(growthRate * 100).toFixed(2)}%<br>
-          Calculated Intrinsic Value (5yr DCF): <strong>$${intrinsicValue.toFixed(2)}</strong>
+          EPS (TTM): $${eps.toFixed(2)}<br>
+          Used Growth Rate: ${(growthRate * 100).toFixed(2)}%<br>
+          Discount Rate: ${(discountRate * 100).toFixed(2)}%<br>
+          <strong>Intrinsic Value (5yr DCF): $${intrinsicValue.toFixed(2)}</strong>
         `;
       } catch (error) {
         console.error("Error fetching data:", error);
-        resultDiv.innerHTML = "⚠️ Could not retrieve data. Please try a valid symbol.";
+        resultDiv.innerHTML = "⚠️ Could not retrieve data. Please check the symbol and try again.";
       }
     }
   </script>
