@@ -24,12 +24,13 @@
   <input type="number" id="growth" placeholder="e.g., 10">
 
   <label for="pe">Expected Future P/E Ratio:</label>
-  <input type="number" id="pe" placeholder="e.g., 20">
+  <input type="number" id="pe" placeholder="e.g., 25">
 
   <label for="discount">Discount Rate (%):</label>
   <input type="number" id="discount" placeholder="e.g., 10">
 
   <button onclick="calculate()">Calculate</button>
+
   <div id="result" class="output"></div>
   <div class="scenarios">
     <div id="pessimistic" class="output pessimistic"></div>
@@ -39,19 +40,18 @@
 
   <script>
     const API_KEY = "d0kuab9r01qhb02558rgd0kuab9r01qhb02558s0";
+    const years = 5;
 
     async function calculate() {
       const symbol = document.getElementById("symbol").value.toUpperCase();
-      const growthRate = parseFloat(document.getElementById("growth").value) / 100;
+      const userGrowthRate = parseFloat(document.getElementById("growth").value) / 100;
       const expectedPE = parseFloat(document.getElementById("pe").value);
       const discountRate = parseFloat(document.getElementById("discount").value) / 100;
-      const years = 5;
 
       const resultDiv = document.getElementById("result");
       const pessimisticDiv = document.getElementById("pessimistic");
       const optimisticDiv = document.getElementById("optimistic");
       const mathDiv = document.getElementById("math");
-      let mathText = "";
 
       try {
         const [profileRes, quoteRes, metricsRes] = await Promise.all([
@@ -67,60 +67,66 @@
         const eps = metrics.metric["epsTTM"] || 0;
         const price = quote.c || 0;
         const currentPE = eps > 0 ? (price / eps).toFixed(2) : "N/A";
+        const historicalPE = metrics.metric["peNormalizedAnnual5Y"] || "N/A";
+        const historicalGrowthRate = metrics.metric["revenueGrowth5Y"] || null;
 
-        // Valuation function
-        function calculateVal(eps, gr, pe, dr) {
-          let value = 0;
+        function calculateIntrinsic(eps, growthRate, peRatio, discountRate) {
+          let intrinsicValue = 0;
           for (let t = 1; t <= years; t++) {
-            const futureEPS = eps * Math.pow(1 + gr, t);
-            const discounted = futureEPS / Math.pow(1 + dr, t);
-            value += discounted;
+            const futureEPS = eps * Math.pow(1 + growthRate, t);
+            const discounted = futureEPS / Math.pow(1 + discountRate, t);
+            intrinsicValue += discounted;
           }
-          const epsYear5 = eps * Math.pow(1 + gr, years);
-          const terminal = epsYear5 * pe;
-          const discountedTerminal = terminal / Math.pow(1 + dr, years);
-          value += discountedTerminal;
-          return { value, terminal };
+          const terminalEPS = eps * Math.pow(1 + growthRate, years);
+          const terminalValue = terminalEPS * peRatio;
+          const discountedTerminal = terminalValue / Math.pow(1 + discountRate, years);
+          intrinsicValue += discountedTerminal;
+          return { intrinsicValue };
         }
 
-        const base = calculateVal(eps, growthRate, expectedPE, discountRate);
-        const pessimistic = calculateVal(eps, growthRate - 0.02, expectedPE - 2, discountRate);
-        const optimistic = calculateVal(eps, growthRate + 0.02, expectedPE + 2, discountRate);
+        const base = calculateIntrinsic(eps, userGrowthRate, expectedPE, discountRate);
+        const pessimistic = calculateIntrinsic(eps, userGrowthRate - 0.02, expectedPE - 2, discountRate);
+        const optimistic = calculateIntrinsic(eps, userGrowthRate + 0.02, expectedPE + 2, discountRate);
 
-        const upside = price > 0 ? ((base.value - price) / price * 100).toFixed(2) : "N/A";
+        const baseUpside = price > 0 ? ((base.intrinsicValue - price) / price * 100).toFixed(2) : "N/A";
+        const pessimisticUpside = price > 0 ? ((pessimistic.intrinsicValue - price) / price * 100).toFixed(2) : "N/A";
+        const optimisticUpside = price > 0 ? ((optimistic.intrinsicValue - price) / price * 100).toFixed(2) : "N/A";
 
         resultDiv.innerHTML = `
           <strong>${profile.name || symbol}</strong><br>
           EPS (TTM): $${eps.toFixed(2)}<br>
           Current Price: $${price.toFixed(2)}<br>
           Current P/E: ${currentPE}<br>
-          Expected Future P/E: ${expectedPE}<br>
-          Growth Rate: ${(growthRate * 100).toFixed(2)}%<br>
+          Expected Future P/E: ${expectedPE} vs Historical Avg P/E: ${historicalPE}<br>
+          Estimated Growth Rate: ${(userGrowthRate * 100).toFixed(2)}% ${historicalGrowthRate ? `vs Historical Growth Rate: ${(historicalGrowthRate * 100).toFixed(2)}%` : ""}<br>
           Discount Rate: ${(discountRate * 100).toFixed(2)}%<br>
-          <strong>Estimated Intrinsic Value: $${base.value.toFixed(2)} (${upside}% ${upside >= 0 ? 'Upside' : 'Downside'})</strong>
+          <strong>Estimated Intrinsic Value: $${base.intrinsicValue.toFixed(2)} (${baseUpside}% ${baseUpside >= 0 ? "Upside" : "Downside"})</strong>
         `;
 
         pessimisticDiv.innerHTML = `
           <strong>😕 Pessimistic Scenario</strong><br>
-          Growth Rate: ${(growthRate - 0.02) * 100}%<br>
+          Growth Rate: ${(userGrowthRate - 0.02) * 100}%<br>
           Future P/E: ${expectedPE - 2}<br>
-          Intrinsic Value: <strong>$${pessimistic.value.toFixed(2)}</strong>
+          Intrinsic Value: <strong>$${pessimistic.intrinsicValue.toFixed(2)} (${pessimisticUpside}% ${pessimisticUpside >= 0 ? "Upside" : "Downside"})</strong>
         `;
 
         optimisticDiv.innerHTML = `
           <strong>😄 Optimistic Scenario</strong><br>
-          Growth Rate: ${(growthRate + 0.02) * 100}%<br>
+          Growth Rate: ${(userGrowthRate + 0.02) * 100}%<br>
           Future P/E: ${expectedPE + 2}<br>
-          Intrinsic Value: <strong>$${optimistic.value.toFixed(2)}</strong>
+          Intrinsic Value: <strong>$${optimistic.intrinsicValue.toFixed(2)} (${optimisticUpside}% ${optimisticUpside >= 0 ? "Upside" : "Downside"})</strong>
         `;
 
-        mathText = `Valuation Formula:\nEPS × (1 + Growth Rate)^t / (1 + Discount Rate)^t for t = 1 to 5\nTerminal = EPS in Year 5 × Future P/E, discounted\n`;
+        mathDiv.textContent = `Valuation Formula:
+Future EPS = EPS × (1 + Growth Rate)^t
+Present Value = Future EPS / (1 + Discount Rate)^t  for t = 1 to 5
+Terminal Value = EPS in Year 5 × Future P/E
+Discounted Terminal = Terminal Value / (1 + Discount Rate)^5
+Sum of all discounted values = Intrinsic Value`;
 
-        mathDiv.textContent = mathText;
-
-      } catch (err) {
-        resultDiv.innerHTML = "⚠️ Error fetching data. Check your inputs or try again later.";
-        console.error(err);
+      } catch (error) {
+        resultDiv.innerHTML = "⚠️ Error fetching data. Please check inputs and try again.";
+        console.error(error);
       }
     }
   </script>
