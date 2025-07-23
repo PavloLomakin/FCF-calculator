@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Stock Intrinsic Value Calculator</title>
+  <meta charset="UTF-8" />
+  <title>Improved Intrinsic Value Calculator</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; padding: 20px; background: #f7f7f7; border-radius: 8px; }
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 20px auto; padding: 20px; background: #f2f2f2; border-radius: 8px; }
     h1 { text-align: center; }
     input, button { margin: 8px 0; padding: 8px; width: 100%; }
-    .output { background: #fff; padding: 10px; border-radius: 6px; margin-top: 10px; }
+    .output { background: #fff; padding: 12px; border-radius: 6px; margin-top: 10px; font-size: 14px; }
+    .math { font-family: monospace; background: #eee; padding: 10px; border-radius: 6px; margin-top: 10px; white-space: pre-wrap; }
   </style>
 </head>
 <body>
@@ -17,10 +18,11 @@
   <input type="text" id="symbol" placeholder="e.g., AAPL">
 
   <label for="growth">Estimated Annual Growth Rate (%):</label>
-  <input type="number" id="growth" placeholder="e.g., 8">
+  <input type="number" id="growth" placeholder="e.g., 10">
 
   <button onclick="calculateIntrinsicValue()">Calculate</button>
   <div class="output" id="result"></div>
+  <div class="math" id="math"></div>
 
   <script>
     const API_KEY = "d0kuab9r01qhb02558rgd0kuab9r01qhb02558s0";
@@ -28,38 +30,54 @@
     async function calculateIntrinsicValue() {
       const symbol = document.getElementById("symbol").value.toUpperCase();
       const growthInput = parseFloat(document.getElementById("growth").value) / 100;
+      const discountRate = 0.10;
+      const years = 5;
       const resultDiv = document.getElementById("result");
+      const mathDiv = document.getElementById("math");
 
       try {
-        // Fetch stock profile
-        const profileResponse = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${API_KEY}`);
-        const profile = await profileResponse.json();
+        const profileRes = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${API_KEY}`);
+        const profile = await profileRes.json();
 
-        // Fetch financial metrics
-        const metricsResponse = await fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${API_KEY}`);
-        const metrics = await metricsResponse.json();
+        const metricsRes = await fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${API_KEY}`);
+        const metrics = await metricsRes.json();
 
         const eps = metrics.metric["epsTTM"] || 0;
-        const growthRate = isNaN(growthInput) ? metrics.metric["growthQuarterlyYOY"] || 0.05 : growthInput;
-        const discountRate = 0.10;
-        const years = 5;
+        const growthRate = isNaN(growthInput) ? 0.08 : growthInput;
 
-        // DCF calculation
         let intrinsicValue = 0;
-        for (let i = 1; i <= years; i++) {
-          intrinsicValue += (eps * Math.pow(1 + growthRate, i)) / Math.pow(1 + discountRate, i);
+        let mathSteps = "";
+        let fcf;
+
+        // Project cash flows and calculate present value
+        for (let t = 1; t <= years; t++) {
+          fcf = eps * Math.pow(1 + growthRate, t);
+          const discountedFCF = fcf / Math.pow(1 + discountRate, t);
+          intrinsicValue += discountedFCF;
+          mathSteps += `Year ${t}: FCF = ${eps.toFixed(2)} × (1 + ${growthRate.toFixed(2)})^${t} = ${fcf.toFixed(2)} → PV = ${discountedFCF.toFixed(2)}\n`;
         }
+
+        // Terminal Value at year 5
+        const finalFCF = eps * Math.pow(1 + growthRate, years);
+        const terminalValue = (finalFCF * (1 + growthRate)) / (discountRate - growthRate);
+        const discountedTerminal = terminalValue / Math.pow(1 + discountRate, years);
+        intrinsicValue += discountedTerminal;
+
+        mathSteps += `\nTerminal Value = (${finalFCF.toFixed(2)} × (1 + ${growthRate.toFixed(2)})) / (${discountRate.toFixed(2)} - ${growthRate.toFixed(2)}) = ${terminalValue.toFixed(2)}\n`;
+        mathSteps += `Discounted Terminal Value = ${terminalValue.toFixed(2)} / (1 + ${discountRate.toFixed(2)})^${years} = ${discountedTerminal.toFixed(2)}\n`;
 
         resultDiv.innerHTML = `
           <strong>${profile.name || symbol}</strong><br>
           EPS (TTM): $${eps.toFixed(2)}<br>
-          Used Growth Rate: ${(growthRate * 100).toFixed(2)}%<br>
+          Growth Rate: ${(growthRate * 100).toFixed(2)}%<br>
           Discount Rate: ${(discountRate * 100).toFixed(2)}%<br>
-          <strong>Intrinsic Value (5yr DCF): $${intrinsicValue.toFixed(2)}</strong>
+          Intrinsic Value (DCF + Terminal): <strong>$${intrinsicValue.toFixed(2)}</strong>
         `;
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        resultDiv.innerHTML = "⚠️ Could not retrieve data. Please check the symbol and try again.";
+
+        mathDiv.textContent = mathSteps;
+      } catch (err) {
+        resultDiv.innerHTML = "⚠️ Failed to fetch data. Check the symbol or try again later.";
+        console.error(err);
       }
     }
   </script>
