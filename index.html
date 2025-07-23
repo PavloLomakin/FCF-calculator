@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Intrinsic Value Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px auto;
+      max-width: 600px;
+      background: #f9f9f9;
+      line-height: 1.5;
+    }
+    label {
+      display: block;
+      margin-top: 1em;
+      font-weight: bold;
+    }
+    input, button {
+      width: 100%;
+      padding: 8px;
+      font-size: 1em;
+      margin-top: 0.25em;
+    }
+    button {
+      margin-top: 1em;
+      background: #007acc;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover { background: #005fa3; }
+    #result {
+      margin-top: 1.5em;
+      padding: 1em;
+      background: #e0ffe0;
+      border-radius: 4px;
+    }
+    #debug {
+      margin-top: 1em;
+      padding: 1em;
+      background: #fff3cd;
+      border-radius: 4px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      max-height: 200px;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+  <h2>📈 Intrinsic Value Calculator (Finnhub)</h2>
+
+  <label for="ticker">Ticker</label>
+  <input id="ticker" placeholder="e.g. AAPL" />
+
+  <label for="growth">Est. Growth Rate (%)</label>
+  <input id="growth" type="number" placeholder="e.g. 10" />
+
+  <label for="pe">Future PE Ratio</label>
+  <input id="pe" type="number" placeholder="e.g. 15" />
+
+  <label for="discount">Discount Rate (%)</label>
+  <input id="discount" type="number" placeholder="e.g. 8" />
+
+  <label for="years">Forecast Years</label>
+  <input id="years" type="number" value="5" />
+
+  <button onclick="calculate()">Calculate</button>
+
+  <div id="result">💬 Results will appear here.</div>
+  <div id="debug" hidden>🐞 Debug output</div>
+
+  <script>
+    const apiKey = "d0kuab9r01qhb02558rgd0kuab9r01qhb02558s0";
+
+    // Helper: fetch JSON only if response.ok && content-type JSON
+    async function fetchJSON(url) {
+      const resp = await fetch(url);
+      if (!resp.ok) {
+        const txt = await resp.text();
+        console.error("Fetch error:", resp.status, txt);
+        throw new Error(`Network error: ${resp.status}`);
+      }
+      const ct = resp.headers.get("content-type") || "";
+      if (ct.includes("application/json")) {
+        return resp.json();
+      } else {
+        const txt = await resp.text();
+        console.error("Expected JSON, got:", txt);
+        throw new Error("Invalid JSON response");
+      }
+    }
+
+    // Safely parse a metric string/number → float, or null if invalid
+    function parseMetric(val) {
+      const n = parseFloat(val);
+      return isNaN(n) ? null : n;
+    }
+
+    // 1) Try cash-flow endpoint for annual FCF
+    // 2) Fallback to metric endpoint (TTM metrics)
+    async function fetchFCF(ticker) {
+      // A) cash-flow endpoint
+      let url = `https://finnhub.io/api/v1/stock/cash-flow?symbol=${ticker}&token=${apiKey}`;
+      let data = await fetchJSON(url);
+      console.log("Cash-flow response:", data);
+      if (data.series && data.series.length) {
+        const rec = data.series[0];               // most recent annual
+        const fcf = parseMetric(rec.freeCashFlow);
+        if (fcf !== null) {
+          return { value: fcf, label: "Free Cash Flow (Annual)" };
+        }
+      }
+
+      // B) metric endpoint fallback
+      url = `https://finnhub.io/api/v1/stock/metric?symbol=${ticker}&metric=all&token=${apiKey}`;
+      data = await fetchJSON(url);
+      console.log("Metric response:", data);
+      if (data.metric) {
+        const candidates = {
+          "Free Cash Flow (TTM)": parseMetric(data.metric.freeCashFlowTTM),
+          "Net Income (TTM)":    parseMetric(data.metric.netIncomeTTM),
+          "EBITDA (TTM)":        parseMetric(data.metric.ebitdaTTM)
+        };
+        for (const [label, val] of Object.entries(candidates)) {
+          if (val !== null) {
+            return { value: val, label };
+          }
+        }
+      }
+
+      throw new Error("No usable metrics (FCF, Net Income, EBITDA)");
+    }
+
+    async function calculate() {
+      const t = document.getElementById("ticker").value.trim().toUpperCase();
+      const g = parseFloat(document.getElementById("growth").value)  / 100;
+      const p = parseFloat(document.getElementById("pe").value);
+      const d = parseFloat(document.getElementById("discount").value)/ 100;
+      const n = parseInt(  document.getElementById("years").value, 10);
+      const res = document.getElementById("result");
+      const dbg = document.getElementById("debug");
+      dbg.hidden = true;
+      res.textContent = "⏳ Fetching data...";
+
+      if (!t) {
+        res.textContent = "⚠️ Please enter a ticker.";
+        return;
+      }
+
+      try {
+        const { value: baseFCF, label } = await fetchFCF(t);
+        let fcf = baseFCF, pvSum = 0;
+        for (let i = 1; i <= n; i++) {
+          fcf *= (1 + g);
+          pvSum += fcf / Math.pow(1 + d, i);
+        }
+        const term = (fcf * p) / Math.pow(1 + d, n);
+        const iv   = pvSum + term;
+
+        res.innerHTML = `
+          ✅ <strong>${t}</strong><br/>
+          🔍 Metric Used: <em>${label}</em><br/>
+          💰 Intrinsic Value ≈ <strong>$${(iv/1e9).toFixed(2)} B</strong>
+        `;
+      } catch (err) {
+        res.textContent = "⚠️ " + err.message;
+        dbg.innerText = err.stack;
+        dbg.hidden = false;
+      }
+    }
+  </script>
+</body>
+</html>
