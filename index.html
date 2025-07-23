@@ -86,27 +86,35 @@
     }
 
     async function fetchFCF(sym) {
-      // Try annual cash-flow first
       try {
         const cfUrl = `https://finnhub.io/api/v1/stock/cash-flow?symbol=${sym}&period=annual&token=${apiKey}`;
         const cf = await fetchJSON(cfUrl);
-        const val = parseNum(cf.series?.annual?.[0]?.freeCashFlow);
-        if (val !== null) {
-          return { value: val, label: "Free Cash Flow (Annual)" };
+        const annual = cf.series?.annual;
+        if (Array.isArray(annual) && annual.length > 0) {
+          const val = parseNum(annual[0].freeCashFlow);
+          if (val !== null) return { value: val, label: "Free Cash Flow (Annual)" };
         }
-      } catch {}
-
-      // Fallback to TTM metrics
-      const mUrl = `https://finnhub.io/api/v1/stock/metric?symbol=${sym}&metric=all&token=${apiKey}`;
-      const md = await fetchJSON(mUrl);
-      const cands = {
-        "Free Cash Flow (TTM)": parseNum(md.metric.freeCashFlowTTM),
-        "Net Income (TTM)"     : parseNum(md.metric.netIncomeTTM),
-        "EBITDA (TTM)"         : parseNum(md.metric.ebitdaTTM)
-      };
-      for (let [label, val] of Object.entries(cands)) {
-        if (val !== null) return { value: val, label };
+        console.warn("Cash-flow structure invalid or missing:", cf);
+      } catch (err) {
+        console.warn("Cash-flow request failed:", err);
       }
+
+      try {
+        const mUrl = `https://finnhub.io/api/v1/stock/metric?symbol=${sym}&metric=all&token=${apiKey}`;
+        const md = await fetchJSON(mUrl);
+        const cands = {
+          "Free Cash Flow (TTM)": parseNum(md.metric?.freeCashFlowTTM),
+          "Net Income (TTM)"     : parseNum(md.metric?.netIncomeTTM),
+          "EBITDA (TTM)"         : parseNum(md.metric?.ebitdaTTM)
+        };
+        for (let [label, val] of Object.entries(cands)) {
+          if (val !== null) return { value: val, label };
+        }
+        console.warn("Metric structure invalid or missing:", md);
+      } catch (err) {
+        console.warn("Metric request failed:", err);
+      }
+
       throw new Error("No usable metrics found");
     }
 
