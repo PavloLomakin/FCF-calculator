@@ -2,23 +2,26 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Improved Intrinsic Value Calculator</title>
+  <title>Intrinsic Value Calculator</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 700px; margin: 20px auto; padding: 20px; background: #f2f2f2; border-radius: 8px; }
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 20px auto; padding: 20px; background: #f9f9f9; border-radius: 8px; }
     h1 { text-align: center; }
-    input, button { margin: 8px 0; padding: 8px; width: 100%; }
+    input, button { margin: 8px 0; padding: 10px; width: 100%; }
     .output { background: #fff; padding: 12px; border-radius: 6px; margin-top: 10px; font-size: 14px; }
     .math { font-family: monospace; background: #eee; padding: 10px; border-radius: 6px; margin-top: 10px; white-space: pre-wrap; }
   </style>
 </head>
 <body>
-  <h1>Intrinsic Value Calculator</h1>
+  <h1>📊 Intrinsic Value Calculator</h1>
 
-  <label for="symbol">Enter Stock Symbol:</label>
-  <input type="text" id="symbol" placeholder="e.g., AAPL">
+  <label for="symbol">Stock Symbol:</label>
+  <input type="text" id="symbol" placeholder="e.g., AMZN">
 
   <label for="growth">Estimated Annual Growth Rate (%):</label>
-  <input type="number" id="growth" placeholder="e.g., 10">
+  <input type="number" id="growth" placeholder="e.g., 15">
+
+  <label for="pe">Expected P/E Ratio at Year 5:</label>
+  <input type="number" id="pe" placeholder="e.g., 20">
 
   <button onclick="calculateIntrinsicValue()">Calculate</button>
   <div class="output" id="result"></div>
@@ -29,11 +32,14 @@
 
     async function calculateIntrinsicValue() {
       const symbol = document.getElementById("symbol").value.toUpperCase();
-      const growthInput = parseFloat(document.getElementById("growth").value) / 100;
+      const growthRate = parseFloat(document.getElementById("growth").value) / 100;
+      const expectedPE = parseFloat(document.getElementById("pe").value);
       const discountRate = 0.10;
       const years = 5;
+
       const resultDiv = document.getElementById("result");
       const mathDiv = document.getElementById("math");
+      let mathText = "";
 
       try {
         const profileRes = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${API_KEY}`);
@@ -43,41 +49,41 @@
         const metrics = await metricsRes.json();
 
         const eps = metrics.metric["epsTTM"] || 0;
-        const growthRate = isNaN(growthInput) ? 0.08 : growthInput;
+        const growth = isNaN(growthRate) ? 0.08 : growthRate;
+        const peRatio = isNaN(expectedPE) ? 15 : expectedPE;
 
         let intrinsicValue = 0;
-        let mathSteps = "";
-        let fcf;
 
-        // Project cash flows and calculate present value
+        // DCF for 5 years
         for (let t = 1; t <= years; t++) {
-          fcf = eps * Math.pow(1 + growthRate, t);
-          const discountedFCF = fcf / Math.pow(1 + discountRate, t);
-          intrinsicValue += discountedFCF;
-          mathSteps += `Year ${t}: FCF = ${eps.toFixed(2)} × (1 + ${growthRate.toFixed(2)})^${t} = ${fcf.toFixed(2)} → PV = ${discountedFCF.toFixed(2)}\n`;
+          const futureEPS = eps * Math.pow(1 + growth, t);
+          const discountedEPS = futureEPS / Math.pow(1 + discountRate, t);
+          intrinsicValue += discountedEPS;
+          mathText += `Year ${t}: EPS = ${eps.toFixed(2)} × (1 + ${growth.toFixed(2)})^${t} = ${futureEPS.toFixed(2)} → PV = ${discountedEPS.toFixed(2)}\n`;
         }
 
-        // Terminal Value at year 5
-        const finalFCF = eps * Math.pow(1 + growthRate, years);
-        const terminalValue = (finalFCF * (1 + growthRate)) / (discountRate - growthRate);
+        // Terminal Value via P/E method
+        const epsYear5 = eps * Math.pow(1 + growth, years);
+        const terminalValue = epsYear5 * peRatio;
         const discountedTerminal = terminalValue / Math.pow(1 + discountRate, years);
         intrinsicValue += discountedTerminal;
 
-        mathSteps += `\nTerminal Value = (${finalFCF.toFixed(2)} × (1 + ${growthRate.toFixed(2)})) / (${discountRate.toFixed(2)} - ${growthRate.toFixed(2)}) = ${terminalValue.toFixed(2)}\n`;
-        mathSteps += `Discounted Terminal Value = ${terminalValue.toFixed(2)} / (1 + ${discountRate.toFixed(2)})^${years} = ${discountedTerminal.toFixed(2)}\n`;
+        mathText += `\nTerminal Value (Year 5 EPS × Expected P/E): ${epsYear5.toFixed(2)} × ${peRatio} = ${terminalValue.toFixed(2)}\n`;
+        mathText += `Discounted Terminal Value: ${terminalValue.toFixed(2)} / (1 + ${discountRate})^${years} = ${discountedTerminal.toFixed(2)}\n`;
 
         resultDiv.innerHTML = `
           <strong>${profile.name || symbol}</strong><br>
           EPS (TTM): $${eps.toFixed(2)}<br>
-          Growth Rate: ${(growthRate * 100).toFixed(2)}%<br>
+          Growth Rate: ${(growth * 100).toFixed(2)}%<br>
+          Expected P/E Ratio: ${peRatio}<br>
           Discount Rate: ${(discountRate * 100).toFixed(2)}%<br>
-          Intrinsic Value (DCF + Terminal): <strong>$${intrinsicValue.toFixed(2)}</strong>
+          <strong>Estimated Intrinsic Value: $${intrinsicValue.toFixed(2)}</strong>
         `;
 
-        mathDiv.textContent = mathSteps;
-      } catch (err) {
-        resultDiv.innerHTML = "⚠️ Failed to fetch data. Check the symbol or try again later.";
-        console.error(err);
+        mathDiv.textContent = mathText;
+      } catch (error) {
+        resultDiv.innerHTML = "⚠️ Unable to fetch data. Please check your inputs.";
+        console.error(error);
       }
     }
   </script>
