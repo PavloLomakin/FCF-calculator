@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>Intrinsic Value Calculator</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; background: #f9f9f9; border-radius: 8px; }
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; padding: 20px; background: #f9f9f9; border-radius: 8px; }
     h1 { text-align: center; }
     input, button { margin: 8px 0; padding: 10px; width: 100%; }
     .scenarios { display: flex; gap: 20px; margin-top: 20px; }
@@ -69,8 +69,7 @@
       const eps = metrics.metric["epsTTM"] || 0;
       const price = quote.c || 0;
       const currentPE = eps > 0 ? (price / eps).toFixed(2) : "N/A";
-      const normalizedPE = metrics.metric["peNormalizedAnnual5Y"] || "N/A";
-      const revenueGrowth5Y = metrics.metric["revenueGrowth5Y"] || null;
+      const forwardPE = metrics.metric["peExclExtraTTM"] || "N/A";
 
       function calculateIntrinsic(eps, growthRate, peRatio, discountRate) {
         let intrinsicValue = 0;
@@ -96,13 +95,10 @@
 
       resultDiv.innerHTML = `
         <strong>${profile.name || symbol}</strong><br>
-        EPS (TTM): $${eps.toFixed(2)}<br>
-        Current Price: $${price.toFixed(2)}<br>
-        Current P/E: ${currentPE}<br>
-        Expected Future P/E: ${expectedPE} vs Normalized P/E (5Y): ${normalizedPE}<br>
-        Estimated Growth Rate: ${(userGrowthRate * 100).toFixed(2)}% ${revenueGrowth5Y ? `vs Revenue Growth (5Y CAGR): ${(revenueGrowth5Y * 100).toFixed(2)}%` : ""}<br>
+        Expected Future P/E: ${expectedPE}<br>
+        Estimated Growth Rate: ${(userGrowthRate * 100).toFixed(2)}%<br>
         Discount Rate: ${(discountRate * 100).toFixed(2)}%<br>
-        <strong>Estimated Intrinsic Value: $${base.intrinsicValue.toFixed(2)} (${baseUpside}% ${baseUpside >= 0 ? "Upside" : "Downside"})</strong>
+        <strong style="color:green;">Estimated Intrinsic Value: $${base.intrinsicValue.toFixed(2)} (${baseUpside}% ${baseUpside >= 0 ? "Upside" : "Downside"})</strong>
       `;
 
       pessimisticDiv.innerHTML = `
@@ -121,16 +117,13 @@
 
       extraDiv.innerHTML = `
         <strong>📦 Additional Metrics</strong><br>
+        EPS (TTM): $${eps.toFixed(2)}<br>
+        Current Price: $${price.toFixed(2)}<br>
+        Current P/E: ${currentPE}<br>
+        Forward P/E: ${forwardPE}<br>
         52-Week Range: ${quote.l} – ${quote.h}<br>
         Market Cap: $${Number(metrics.metric["marketCapitalization"] || 0).toLocaleString()}<br>
-        Dividend Yield: ${metrics.metric["dividendYieldIndicatedAnnual"] || 0}%<br>
-        Revenue Growth (1Y): ${(metrics.metric["revenueGrowth"] * 100).toFixed(2)}%<br>
-        Profit Margin: ${(metrics.metric["netProfitMarginAnnual"] * 100).toFixed(2)}%<br>
-        ROE: ${(metrics.metric["roeAnnual"] * 100).toFixed(2)}%<br>
-        Debt/Equity: ${metrics.metric["debtEquityRatioAnnual"]}<br>
-        EV/EBITDA: ${metrics.metric["evToEbitdaAnnual"]}<br>
-        P/S: ${metrics.metric["priceToSalesAnnual"]}<br>
-        P/B: ${metrics.metric["priceToBookAnnual"]}
+        Dividend Yield: ${metrics.metric["dividendYieldIndicatedAnnual"] || 0}%
       `;
 
       mathDiv.textContent = `Valuation Formula:
@@ -145,5 +138,6 @@ Sum of all discounted values = Intrinsic Value`;
     }
   }
 </script>
+  
 </body>
 </html>
