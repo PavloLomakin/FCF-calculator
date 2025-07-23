@@ -74,6 +74,8 @@
         const discountedTerminal = terminalValue / Math.pow(1 + discountRate, years);
         intrinsicValue += discountedTerminal;
 
+        const upsidePercent = price > 0 ? ((intrinsicValue - price) / price * 100).toFixed(2) : "N/A";
+
         mathText += `\nTerminal Value (Year 5 EPS × Future P/E): ${epsYear5.toFixed(2)} × ${peRatio} = ${terminalValue.toFixed(2)}\n`;
         mathText += `Discounted Terminal Value: ${terminalValue.toFixed(2)} / (1 + ${discountRate})^${years} = ${discountedTerminal.toFixed(2)}\n`;
 
@@ -85,7 +87,7 @@
           Expected Future P/E: ${peRatio}<br>
           Growth Rate: ${(growth * 100).toFixed(2)}%<br>
           Discount Rate: ${(discountRate * 100).toFixed(2)}%<br>
-          <strong>Estimated Intrinsic Value: $${intrinsicValue.toFixed(2)}</strong>
+          <strong>Estimated Intrinsic Value: $${intrinsicValue.toFixed(2)} <span style="color:${upsidePercent>=0 ? 'green' : 'red'};">(${upsidePercent}% ${upsidePercent>=0 ? 'Upside' : 'Downside'})</span></strong>
         `;
 
         mathDiv.textContent = mathText;
