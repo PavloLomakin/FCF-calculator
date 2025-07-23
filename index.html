@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Intrinsic Value Calculator (Finnhub)</title>
+  <meta charset="UTF-8">
+  <title>Intrinsic Value Calculator</title>
   <style>
     body { font-family: Arial; margin: 40px auto; max-width: 600px; background: #fafafa; }
     label { display: block; margin-top: 1em; font-weight: bold; }
@@ -14,29 +14,26 @@
     }
     button:hover { background: #005fa3; }
     #result { margin-top: 1.5em; padding: 1em; background: #e0ffe0; border-radius: 4px; }
-    #debug {
-      margin-top: 1em; padding: 1em; background: #fff3cd; font-family: monospace;
-      white-space: pre-wrap; max-height: 200px; overflow: auto;
-    }
+    #debug  { margin-top: 1em; padding: 1em; background: #fff3cd; font-family: monospace; }
   </style>
 </head>
 <body>
   <h2>📈 Intrinsic Value Calculator</h2>
 
   <label for="ticker">Ticker</label>
-  <input id="ticker" placeholder="e.g. AAPL" />
+  <input id="ticker" placeholder="e.g. AAPL">
 
   <label for="growth">Est. Growth Rate (%)</label>
-  <input id="growth" type="number" placeholder="e.g. 10" />
+  <input id="growth" type="number" placeholder="e.g. 10">
 
   <label for="pe">Future PE Ratio</label>
-  <input id="pe" type="number" placeholder="e.g. 15" />
+  <input id="pe" type="number" placeholder="e.g. 15">
 
   <label for="discount">Discount Rate (%)</label>
-  <input id="discount" type="number" placeholder="e.g. 8" />
+  <input id="discount" type="number" placeholder="e.g. 8">
 
   <label for="years">Forecast Years</label>
-  <input id="years" type="number" value="5" />
+  <input id="years" type="number" value="5">
 
   <button onclick="calculate()">Calculate</button>
 
@@ -44,48 +41,40 @@
   <div id="debug" hidden>🐞 Debug output</div>
 
   <script>
+    console.log("Script loaded—calculate() is defined.");
+
     const apiKey = "d0kuab9r01qhb02558rgd0kuab9r01qhb02558s0";
 
-    // Fetch JSON or throw
     async function fetchJSON(url) {
       const res = await fetch(url);
       if (!res.ok) throw new Error(`Network error: ${res.status}`);
-      return res.json(); // assume JSON
+      return res.json();
     }
 
-    // parse numeric strings
     function parseNum(v) {
       const n = parseFloat(v);
       return isNaN(n) ? null : n;
     }
 
-    async function fetchFCF(symbol) {
-      // 1) Try annual cash-flow
+    async function fetchFCF(sym) {
+      // Try annual cash-flow
       try {
-        const cfUrl = 
-          `https://finnhub.io/api/v1/stock/cash-flow?symbol=${symbol}` +
-          `&period=annual&token=${apiKey}`;
-        const cfData = await fetchJSON(cfUrl);
-        console.log("Cash-flow:", cfData);
-        const fcf = parseNum(cfData.series?.[0]?.freeCashFlow);
-        if (fcf !== null) return { value: fcf, label: "Free Cash Flow (Annual)" };
-      } catch (e) {
-        console.warn("cash-flow failed:", e.message);
-      }
+        const cfUrl = `https://finnhub.io/api/v1/stock/cash-flow?symbol=${sym}&period=annual&token=${apiKey}`;
+        const cf = await fetchJSON(cfUrl);
+        const val = parseNum(cf.series?.[0]?.freeCashFlow);
+        if (val !== null) return { value: val, label: "Free Cash Flow (Annual)" };
+      } catch {}
 
-      // 2) Fallback to TTM metrics
-      const metricUrl = 
-        `https://finnhub.io/api/v1/stock/metric?symbol=${symbol}` +
-        `&metric=all&token=${apiKey}`;
-      const mData = await fetchJSON(metricUrl);
-      console.log("Metric:", mData);
-      const candidates = {
-        "Free Cash Flow (TTM)": parseNum(mData.metric.freeCashFlowTTM),
-        "Net Income (TTM)"    : parseNum(mData.metric.netIncomeTTM),
-        "EBITDA (TTM)"        : parseNum(mData.metric.ebitdaTTM)
+      // Fallback to TTM metrics
+      const mUrl = `https://finnhub.io/api/v1/stock/metric?symbol=${sym}&metric=all&token=${apiKey}`;
+      const md = await fetchJSON(mUrl);
+      const cands = {
+        "Free Cash Flow (TTM)": parseNum(md.metric.freeCashFlowTTM),
+        "Net Income (TTM)"   : parseNum(md.metric.netIncomeTTM),
+        "EBITDA (TTM)"       : parseNum(md.metric.ebitdaTTM)
       };
-      for (let [lbl,val] of Object.entries(candidates)) {
-        if (val !== null) return { value: val, label: lbl };
+      for (let [lbl, v] of Object.entries(cands)) {
+        if (v !== null) return { value: v, label: lbl };
       }
       throw new Error("No usable metrics found");
     }
@@ -95,29 +84,27 @@
       const g = parseNum(document.getElementById("growth").value)  / 100;
       const p = parseNum(document.getElementById("pe").value);
       const d = parseNum(document.getElementById("discount").value)/ 100;
-      const n = parseInt(document.getElementById("years").value, 10);
+      const n = parseInt(  document.getElementById("years").value, 10);
       const res = document.getElementById("result");
       const dbg = document.getElementById("debug");
       dbg.hidden = true;
-      res.textContent = "⏳ Fetching data…";
+      res.textContent = "⏳ Fetching…";
 
-      if (!t) {
-        return void (res.textContent = "⚠️ Please enter a ticker.");
-      }
+      if (!t) return res.textContent = "⚠️ Please enter a ticker.";
 
       try {
-        const { value: base, label } = await fetchFCF(t);
-        let fcf = base, pv = 0;
+        const { value, label } = await fetchFCF(t);
+        let fcf = value, pv = 0;
         for (let i = 1; i <= n; i++) {
           fcf *= 1 + g;
           pv  += fcf / Math.pow(1 + d, i);
         }
-        const terminal = (fcf * p) / Math.pow(1 + d, n);
-        const iv = pv + terminal;
+        const term = (fcf * p) / Math.pow(1 + d, n);
+        const iv   = pv + term;
 
         res.innerHTML = `
-          ✅ <strong>${t}</strong><br/>
-          🔍 Metric Used: <em>${label}</em><br/>
+          ✅ <strong>${t}</strong><br>
+          🔍 Metric Used: <em>${label}</em><br>
           💰 Intrinsic Value: <strong>$${(iv/1e9).toFixed(2)}B</strong>
         `;
       } catch (err) {
