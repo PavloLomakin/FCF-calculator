@@ -7,14 +7,34 @@
     body { font-family: Arial; margin: 40px auto; max-width: 600px; background: #fafafa; }
     label { display: block; margin-top: 1em; font-weight: bold; }
     input, button {
-      width: 100%; padding: 8px; margin-top: .25em; font-size: 1em;
+      width: 100%;
+      padding: 8px;
+      margin-top: .25em;
+      font-size: 1em;
     }
     button {
-      margin-top: 1em; background: #007acc; color: #fff; border: none; cursor: pointer;
+      margin-top: 1em;
+      background: #007acc;
+      color: #fff;
+      border: none;
+      cursor: pointer;
     }
     button:hover { background: #005fa3; }
-    #result { margin-top: 1.5em; padding: 1em; background: #e0ffe0; border-radius: 4px; }
-    #debug  { margin-top: 1em; padding: 1em; background: #fff3cd; font-family: monospace; }
+    #result {
+      margin-top: 1.5em;
+      padding: 1em;
+      background: #e0ffe0;
+      border-radius: 4px;
+    }
+    #debug {
+      margin-top: 1em;
+      padding: 1em;
+      background: #fff3cd;
+      font-family: monospace;
+      white-space: pre-wrap;
+      max-height: 200px;
+      overflow: auto;
+    }
   </style>
 </head>
 <body>
@@ -40,6 +60,7 @@
   <div id="result">💬 Results will appear here.</div>
   <div id="debug" hidden>🐞 Debug output</div>
 
+  <!-- ✅ JavaScript moved below all DOM elements -->
   <script>
     console.log("Script loaded—calculate() is defined.");
 
@@ -57,7 +78,6 @@
     }
 
     async function fetchFCF(sym) {
-      // Try annual cash-flow
       try {
         const cfUrl = `https://finnhub.io/api/v1/stock/cash-flow?symbol=${sym}&period=annual&token=${apiKey}`;
         const cf = await fetchJSON(cfUrl);
@@ -65,7 +85,6 @@
         if (val !== null) return { value: val, label: "Free Cash Flow (Annual)" };
       } catch {}
 
-      // Fallback to TTM metrics
       const mUrl = `https://finnhub.io/api/v1/stock/metric?symbol=${sym}&metric=all&token=${apiKey}`;
       const md = await fetchJSON(mUrl);
       const cands = {
@@ -84,7 +103,7 @@
       const g = parseNum(document.getElementById("growth").value)  / 100;
       const p = parseNum(document.getElementById("pe").value);
       const d = parseNum(document.getElementById("discount").value)/ 100;
-      const n = parseInt(  document.getElementById("years").value, 10);
+      const n = parseInt(document.getElementById("years").value, 10);
       const res = document.getElementById("result");
       const dbg = document.getElementById("debug");
       dbg.hidden = true;
