@@ -103,6 +103,7 @@
     async function fetchFCF(ticker) {
       // A) cash-flow endpoint
       let url = `https://finnhub.io/api/v1/stock/cash-flow?symbol=${ticker}&token=${apiKey}`;
+      let url = `https://finnhub.io/api/v1/stock/cash-flow?symbol=${ticker}&period=annual&token=${apiKey}`;
       let data = await fetchJSON(url);
       console.log("Cash-flow response:", data);
       if (data.series && data.series.length) {
