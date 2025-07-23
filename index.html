@@ -2,22 +2,26 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Intrinsic Value Calculator</title>
+  <title>Intrinsic Value Calculator (Finnhub)</title>
   <style>
     body { font-family: Arial; margin: 40px auto; max-width: 600px; background: #fafafa; }
     label { display: block; margin-top: 1em; font-weight: bold; }
-    input, button { width: 100%; padding: 8px; margin-top: .25em; font-size: 1em; }
-    button { margin-top: 1em; background: #007acc; color: white; border: none; cursor: pointer; }
+    input, button {
+      width: 100%; padding: 8px; margin-top: .25em; font-size: 1em;
+    }
+    button {
+      margin-top: 1em; background: #007acc; color: #fff; border: none; cursor: pointer;
+    }
     button:hover { background: #005fa3; }
     #result { margin-top: 1.5em; padding: 1em; background: #e0ffe0; border-radius: 4px; }
-    #debug  {
+    #debug {
       margin-top: 1em; padding: 1em; background: #fff3cd; font-family: monospace;
       white-space: pre-wrap; max-height: 200px; overflow: auto;
     }
   </style>
 </head>
 <body>
-  <h2>📈 Intrinsic Value Calculator (Finnhub)</h2>
+  <h2>📈 Intrinsic Value Calculator</h2>
 
   <label for="ticker">Ticker</label>
   <input id="ticker" placeholder="e.g. AAPL" />
@@ -42,85 +46,86 @@
   <script>
     const apiKey = "d0kuab9r01qhb02558rgd0kuab9r01qhb02558s0";
 
-    // Always try resp.json(), catch non-JSON or network errors.
+    // Fetch JSON or throw
     async function fetchJSON(url) {
-      const resp = await fetch(url);
-      if (!resp.ok) throw new Error(`Network error: ${resp.status}`);
-      try {
-        return await resp.json();
-      } catch {
-        throw new Error("Non-JSON response");
-      }
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Network error: ${res.status}`);
+      return res.json(); // assume JSON
     }
 
-    function parseMetric(v) {
+    // parse numeric strings
+    function parseNum(v) {
       const n = parseFloat(v);
       return isNaN(n) ? null : n;
     }
 
-    async function fetchFCF(ticker) {
-      // 1) Try annual cash-flow endpoint
+    async function fetchFCF(symbol) {
+      // 1) Try annual cash-flow
       try {
         const cfUrl = 
-          `https://finnhub.io/api/v1/stock/cash-flow?symbol=${ticker}` +
+          `https://finnhub.io/api/v1/stock/cash-flow?symbol=${symbol}` +
           `&period=annual&token=${apiKey}`;
         const cfData = await fetchJSON(cfUrl);
-        console.log("Cash‐flow response:", cfData);
-        if (cfData.series?.length) {
-          const fcf = parseMetric(cfData.series[0].freeCashFlow);
-          if (fcf !== null) {
-            return { value: fcf, label: "Free Cash Flow (Annual)" };
-          }
-        }
+        console.log("Cash-flow:", cfData);
+        const fcf = parseNum(cfData.series?.[0]?.freeCashFlow);
+        if (fcf !== null) return { value: fcf, label: "Free Cash Flow (Annual)" };
       } catch (e) {
-        console.warn("cash-flow failed, falling back:", e.message);
+        console.warn("cash-flow failed:", e.message);
       }
 
-      // 2) Fallback to TTM metrics endpoint
+      // 2) Fallback to TTM metrics
       const metricUrl = 
-        `https://finnhub.io/api/v1/stock/metric?symbol=${ticker}` +
+        `https://finnhub.io/api/v1/stock/metric?symbol=${symbol}` +
         `&metric=all&token=${apiKey}`;
       const mData = await fetchJSON(metricUrl);
-      console.log("Metric response:", mData);
+      console.log("Metric:", mData);
       const candidates = {
-        "Free Cash Flow (TTM)": parseMetric(mData.metric.freeCashFlowTTM),
-        "Net Income (TTM)"    : parseMetric(mData.metric.netIncomeTTM),
-        "EBITDA (TTM)"        : parseMetric(mData.metric.ebitdaTTM)
+        "Free Cash Flow (TTM)": parseNum(mData.metric.freeCashFlowTTM),
+        "Net Income (TTM)"    : parseNum(mData.metric.netIncomeTTM),
+        "EBITDA (TTM)"        : parseNum(mData.metric.ebitdaTTM)
       };
-      for (const [lbl, val] of Object.entries(candidates)) {
+      for (let [lbl,val] of Object.entries(candidates)) {
         if (val !== null) return { value: val, label: lbl };
       }
-
       throw new Error("No usable metrics found");
     }
 
     async function calculate() {
-      const t   = document.getElementById("ticker").value.trim().toUpperCase();
-      const g   = parseFloat(document.getElementById("growth").value)  / 100;
-      const p   = parseFloat(document.getElementById("pe").value);
-      const d   = parseFloat(document.getElementById("discount").value)/ 100;
-      const n   = parseInt(  document.getElementById("years").value, 10);
+      const t = document.getElementById("ticker").value.trim().toUpperCase();
+      const g = parseNum(document.getElementById("growth").value)  / 100;
+      const p = parseNum(document.getElementById("pe").value);
+      const d = parseNum(document.getElementById("discount").value)/ 100;
+      const n = parseInt(document.getElementById("years").value, 10);
       const res = document.getElementById("result");
       const dbg = document.getElementById("debug");
       dbg.hidden = true;
       res.textContent = "⏳ Fetching data…";
 
       if (!t) {
-        res.textContent = "⚠️ Please enter a ticker.";
-        return;
+        return void (res.textContent = "⚠️ Please enter a ticker.");
       }
 
       try {
-        const { value: baseFCF, label } = await fetchFCF(t);
-        let fcf = baseFCF, pv = 0;
+        const { value: base, label } = await fetchFCF(t);
+        let fcf = base, pv = 0;
         for (let i = 1; i <= n; i++) {
           fcf *= 1 + g;
           pv  += fcf / Math.pow(1 + d, i);
         }
-        const term = (fcf * p) / Math.pow(1 + d, n);
-        const iv   = pv + term;
+        const terminal = (fcf * p) / Math.pow(1 + d, n);
+        const iv = pv + terminal;
 
         res.innerHTML = `
           ✅ <strong>${t}</strong><br/>
           🔍 Metric Used: <em>${label}</em><br/>
-          💰 Intrinsic Value ≈ <strong>$${(iv/1e9).toFixed(2)} B</strong>
+          💰 Intrinsic Value: <strong>$${(iv/1e9).toFixed(2)}B</strong>
+        `;
+      } catch (err) {
+        res.textContent = "⚠️ " + err.message;
+        dbg.textContent = err.stack;
+        dbg.hidden = false;
+      }
+    }
+  </script>
+</body>
+</html>
