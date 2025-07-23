@@ -2,157 +2,57 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Intrinsic Value Calculator</title>
+  <title>Stock Intrinsic Value Calculator</title>
   <style>
-    body {
-      font-family: Arial;
-      margin: 40px auto;
-      max-width: 600px;
-      background: #fafafa;
-    }
-    label {
-      display: block;
-      margin-top: 1em;
-      font-weight: bold;
-    }
-    input, button {
-      width: 100%;
-      padding: 8px;
-      margin-top: .25em;
-      font-size: 1em;
-    }
-    button {
-      margin-top: 1em;
-      background: #007acc;
-      color: #fff;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #005fa3;
-    }
-    #result {
-      margin-top: 1.5em;
-      padding: 1em;
-      background: #e0ffe0;
-      border-radius: 4px;
-    }
-    #debug {
-      margin-top: 1em;
-      padding: 1em;
-      background: #fff3cd;
-      font-family: monospace;
-      white-space: pre-wrap;
-      max-height: 200px;
-      overflow: auto;
-    }
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; padding: 20px; background: #f7f7f7; border-radius: 8px; }
+    h1 { text-align: center; }
+    input, button { margin: 8px 0; padding: 8px; width: 100%; }
+    .output { background: #fff; padding: 10px; border-radius: 6px; margin-top: 10px; }
   </style>
 </head>
 <body>
-  <h2>📈 Intrinsic Value Calculator</h2>
-
-  <label for="ticker">Ticker</label>
-  <input id="ticker" placeholder="e.g. AAPL">
-
-  <label for="growth">Est. Growth Rate (%)</label>
-  <input id="growth" type="number" placeholder="e.g. 10">
-
-  <label for="pe">Future PE Ratio</label>
-  <input id="pe" type="number" placeholder="e.g. 15">
-
-  <label for="discount">Discount Rate (%)</label>
-  <input id="discount" type="number" placeholder="e.g. 8">
-
-  <label for="years">Forecast Years</label>
-  <input id="years" type="number" value="5">
-
-  <button onclick="calculate()">Calculate</button>
-
-  <div id="result">💬 Results will appear here.</div>
-  <div id="debug" hidden>🐞 Debug output</div>
+  <h1>Intrinsic Value Calculator</h1>
+  <label for="symbol">Enter Stock Symbol:</label>
+  <input type="text" id="symbol" placeholder="e.g., AAPL">
+  <button onclick="calculateIntrinsicValue()">Calculate</button>
+  <div class="output" id="result"></div>
 
   <script>
-    const apiKey = "d0kuab9r01qhb02558rgd0kuab9r01qhb02558s0";
+    const API_KEY = "d0kuab9r01qhb02558rgd0kuab9r01qhb02558s0";
 
-    async function fetchJSON(url) {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`Network error: ${res.status}`);
-      return res.json();
-    }
-
-    function parseNum(v) {
-      const n = parseFloat(v);
-      return isNaN(n) ? null : n;
-    }
-
-    async function fetchFCF(sym) {
-      try {
-        const cfUrl = `https://finnhub.io/api/v1/stock/cash-flow?symbol=${sym}&period=annual&token=${apiKey}`;
-        const cf = await fetchJSON(cfUrl);
-        const annual = cf.series?.annual;
-        if (Array.isArray(annual) && annual.length > 0) {
-          const val = parseNum(annual[0].freeCashFlow);
-          if (val !== null) return { value: val, label: "Free Cash Flow (Annual)" };
-        }
-        console.warn("Cash-flow structure invalid or missing:", cf);
-      } catch (err) {
-        console.warn("Cash-flow request failed:", err);
-      }
+    async function calculateIntrinsicValue() {
+      const symbol = document.getElementById("symbol").value.toUpperCase();
+      const resultDiv = document.getElementById("result");
 
       try {
-        const mUrl = `https://finnhub.io/api/v1/stock/metric?symbol=${sym}&metric=all&token=${apiKey}`;
-        const md = await fetchJSON(mUrl);
-        const cands = {
-          "Free Cash Flow (TTM)": parseNum(md.metric?.freeCashFlowTTM),
-          "Net Income (TTM)"     : parseNum(md.metric?.netIncomeTTM),
-          "EBITDA (TTM)"         : parseNum(md.metric?.ebitdaTTM)
-        };
-        for (let [label, val] of Object.entries(cands)) {
-          if (val !== null) return { value: val, label };
+        // Get stock profile for name and other info
+        const profileResponse = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${API_KEY}`);
+        const profile = await profileResponse.json();
+
+        // Get financials - using EPS and growth as proxies
+        const metricsResponse = await fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${API_KEY}`);
+        const metrics = await metricsResponse.json();
+
+        const eps = metrics.metric["epsTTM"] || 0;
+        const growthRate = metrics.metric["growthQuarterlyYOY"] || 0.05;
+        const discountRate = 0.10;
+        const years = 5;
+
+        // DCF Calculation
+        let intrinsicValue = 0;
+        for (let i = 1; i <= years; i++) {
+          intrinsicValue += (eps * Math.pow(1 + growthRate, i)) / Math.pow(1 + discountRate, i);
         }
-        console.warn("Metric structure invalid or missing:", md);
-      } catch (err) {
-        console.warn("Metric request failed:", err);
-      }
 
-      throw new Error("No usable metrics found");
-    }
-
-    async function calculate() {
-      const t = document.getElementById("ticker").value.trim().toUpperCase();
-      const g = parseNum(document.getElementById("growth").value) / 100;
-      const p = parseNum(document.getElementById("pe").value);
-      const d = parseNum(document.getElementById("discount").value) / 100;
-      const n = parseInt(document.getElementById("years").value, 10);
-      const res = document.getElementById("result");
-      const dbg = document.getElementById("debug");
-      dbg.hidden = true;
-      res.textContent = "⏳ Fetching…";
-
-      if (!t) {
-        res.textContent = "⚠️ Please enter a ticker.";
-        return;
-      }
-
-      try {
-        const { value, label } = await fetchFCF(t);
-        let fcf = value, pv = 0;
-        for (let i = 1; i <= n; i++) {
-          fcf *= 1 + g;
-          pv += fcf / Math.pow(1 + d, i);
-        }
-        const term = (fcf * p) / Math.pow(1 + d, n);
-        const iv = pv + term;
-
-        res.innerHTML = `
-          ✅ <strong>${t}</strong><br>
-          🔍 Metric Used: <em>${label}</em><br>
-          💰 Intrinsic Value: <strong>$${(iv / 1e9).toFixed(2)}B</strong>
+        resultDiv.innerHTML = `
+          <strong>${profile.name || symbol}</strong><br>
+          Current EPS: ${eps.toFixed(2)}<br>
+          Estimated Growth Rate: ${(growthRate * 100).toFixed(2)}%<br>
+          Calculated Intrinsic Value (5yr DCF): <strong>$${intrinsicValue.toFixed(2)}</strong>
         `;
-      } catch (err) {
-        res.textContent = "⚠️ " + err.message;
-        dbg.textContent = err.stack;
-        dbg.hidden = false;
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        resultDiv.innerHTML = "⚠️ Could not retrieve data. Please try a valid symbol.";
       }
     }
   </script>
