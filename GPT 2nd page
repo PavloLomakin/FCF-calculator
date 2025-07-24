@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Checklist Evaluation</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f8fafc;
+      margin: 0;
+      padding: 20px;
+      color: #2d3748;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      background-color: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      padding: 30px;
+    }
+
+    .header {
+      text-align: center;
+      background: linear-gradient(135deg, #2E7D32, #1565C0);
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 2rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 30px;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    th {
+      background-color: #e8edf2;
+    }
+
+    .score-cell {
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .highlight {
+      font-size: 1.2rem;
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .WeakBuy {
+      background-color: rgba(255, 235, 59, 0.2);
+      color: #f57c00;
+    }
+
+    .final-score {
+      text-align: right;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .note {
+      font-size: 0.9rem;
+      margin-top: 30px;
+      color: #4a5568;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1><i class="fas fa-check-circle"></i> Stock Checklist Evaluation</h1>
+      <p>Evaluate a stock based on 13 key metrics</p>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Step</th>
+          <th>Action</th>
+          <th>Ideal Condition</th>
+          <th class="score-cell">Score</th>
+          <th>Source</th>
+          <th>Meaning</th>
+        </tr>
+      </thead>
+      <tbody id="evaluation-table">
+        <tr><td>1</td><td>Chart</td><td>1yr, 5yr = Growth</td><td class="score-cell">1</td><td>Overview</td><td>N/A</td></tr>
+        <tr><td>2</td><td>Financials</td><td>Growth</td><td class="score-cell">2</td><td>Overview</td><td>Revenue & profit</td></tr>
+        <tr><td>3</td><td>PE & Forward PE</td><td>Below sector average</td><td class="score-cell">2</td><td>Overview+Sector</td><td>Valuation</td></tr>
+        <tr><td>4</td><td>P/B</td><td>&lt;1 or ~1</td><td class="score-cell">0</td><td>Ratios</td><td>Value</td></tr>
+        <tr><td>5</td><td>PEG</td><td>&lt;1 or ~1</td><td class="score-cell">2</td><td>Ratios</td><td>Growth valuation</td></tr>
+        <tr><td>6</td><td>Debt/Equity</td><td>&lt;1 or ~1</td><td class="score-cell">2</td><td>Ratios</td><td>Leverage</td></tr>
+        <tr><td>7</td><td>ROE</td><td>≥13% (10% min)</td><td class="score-cell">2</td><td>Ratios</td><td>Profitability</td></tr>
+        <tr><td>8</td><td>Free Cash Flow</td><td>Stable or Growing</td><td class="score-cell">1</td><td>Cash Flow</td><td>Available money</td></tr>
+        <tr><td>9</td><td>EPS Growth</td><td>Growth or stability</td><td class="score-cell">2</td><td>Income</td><td>Profitability</td></tr>
+        <tr><td>10</td><td>Share Change (YoY)</td><td>≤0%</td><td class="score-cell">2</td><td>Income</td><td>Dilution</td></tr>
+        <tr><td>11</td><td>Dividend Growth</td><td>Growing dividends</td><td class="score-cell">2</td><td>Income</td><td>Returns</td></tr>
+        <tr><td>12</td><td>Forecast</td><td>Growth in low est.</td><td class="score-cell">1</td><td>Forecast</td><td>Expectations</td></tr>
+        <tr><td>13</td><td>News</td><td>Positive, no lawsuits</td><td class="score-cell">0</td><td>Overview</td><td>Sentiment</td></tr>
+      </tbody>
+    </table>
+
+    <div class="highlight WeakBuy">
+      Final Verdict: <strong>Weak Buy</strong>
+    </div>
+
+    <div class="final-score">
+      Score: 39 / 44
+    </div>
+
+    <div class="note">
+      2 = Strong, 1 = Normal, 0 = Poor. Verdict thresholds: <br>
+      41+ = Strong Buy, 36-40 = Buy, 31-35 = Weak Buy, 26-30 = Not Recommended, 20-25 = Do Not Buy, ≤19 = Strong Not Buy.
+    </div>
+  </div>
+</body>
+</html>
