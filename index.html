@@ -24,6 +24,8 @@
             --warning-color: #F57C00;
             --card-radius: 12px;
             --transition: all 0.2s ease-in-out;
+            --dark-grey: #616161;
+            --dark-grey-hover: #424242;
         }
 
         body {
@@ -46,11 +48,20 @@
         }
 
         .header {
+            display: flex;
+            justify-content: space-between; /* Pushes content and button to ends */
+            align-items: center; /* Vertically centers items */
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             color: white;
             padding: 25px 30px;
-            text-align: center;
             border-bottom: 1px solid rgba(255,255,255,0.1);
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        }
+
+        .header-content {
+            text-align: center; /* Keep text centered within its own block */
+            flex-grow: 1; /* Allows it to take up available space */
+            padding-right: 20px; /* Space between text and button */
         }
 
         .header h1 {
@@ -69,6 +80,22 @@
             opacity: 0.9;
             font-size: 1rem;
         }
+
+        .pro-button-header {
+            margin-left: auto; /* Pushes it to the right */
+            align-self: flex-start; /* Align to the top of the flex container */
+            padding: 2px 2px; /* Significantly narrower padding */
+            font-size: 0.7rem; /* Smaller font */
+            margin-top: 10px; /* Adjust vertical position */
+            min-width: unset; /* Override any min-width from other button styles */
+            background-color: var(--dark-grey); /* Ensure it's dark grey */
+        }
+
+        .pro-button-header:hover {
+            background-color: var(--dark-grey-hover); /* Darker grey on hover */
+            box-shadow: 0 4px 12px rgba(97, 97, 97, 0.2);
+        }
+
 
         .content {
             padding: 25px 30px;
@@ -135,7 +162,13 @@
             outline: none;
         }
 
-        button {
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .button-group button {
             background-color: var(--primary-color);
             color: white;
             padding: 14px;
@@ -144,8 +177,6 @@
             cursor: pointer;
             font-size: 1rem;
             font-weight: 600;
-            width: 100%;
-            margin-top: 10px;
             transition: var(--transition);
             display: flex;
             align-items: center;
@@ -153,23 +184,28 @@
             gap: 8px;
         }
 
-        button:hover {
+        .button-group button:first-child {
+            flex: 3;
+        }
+
+        .button-group button:hover {
             background-color: var(--primary-color);
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(46, 125, 50, 0.2);
         }
 
-        button:active {
+        .button-group button:active {
             transform: translateY(0);
         }
 
         .button-secondary {
-            background-color: var(--secondary-color);
+            flex: 1;
+            background-color: var(--dark-grey);
         }
 
         .button-secondary:hover {
-            background-color: var(--secondary-color);
-            box-shadow: 0 4px 12px rgba(21, 101, 192, 0.2);
+            background-color: var(--dark-grey-hover);
+            box-shadow: 0 4px 12px rgba(97, 97, 97, 0.2);
         }
 
         .results-grid {
@@ -290,11 +326,19 @@
             gap: 10px;
         }
 
-        .finnhub-widget-container {
-            height: 200px;
-            overflow: hidden;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px var(--shadow-light);
+        .analyst-recommendations-grid {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .analyst-recommendations-grid span {
+            flex: 1;
+            min-width: 80px;
+            text-align: center;
+            font-size: 0.95rem;
         }
 
         .value-highlight {
@@ -352,45 +396,22 @@
             opacity: 1;
         }
 
-        @media (max-width: 768px) {
-            .header {
-                padding: 20px;
-            }
-            
-            .header h1 {
-                font-size: 1.8rem;
-            }
-            
-            .content {
-                padding: 20px;
-            }
-            
-            .input-section {
-                flex-direction: column;
-                gap: 20px;
-            }
-            
-            .results-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .metrics-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
+        .per-year-growth-inputs {
+            display: none; /* Hidden by default */
         }
-
-        @media (max-width: 480px) {
-            .metrics-grid {
-                grid-template-columns: 1fr;
-            }
+        .per-year-growth-inputs.active {
+            display: block;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1><i class="fas fa-calculator"></i> Intrinsic Value Calculator</h1>
-            <p>Calculate the fair value of stocks based on fundamental analysis</p>
+            <div class="header-content">
+                <h1><i class="fas fa-calculator"></i> Intrinsic Value Calculator</h1>
+                <p>Calculate the fair value of stocks based on fundamental analysis</p>
+            </div>
+            <button id="toggleGrowthMode" onclick="toggleGrowthInputMode()" class="button-secondary pro-button-header">Pro</button>
         </div>
 
         <div class="content">
@@ -406,9 +427,48 @@
 
                     <div class="input-group">
                         <label for="growth">Estimated Annual Growth Rate (%) <span class="tooltip"><i class="fas fa-info-circle"></i><span class="tooltiptext">Your estimate of the company's annual earnings growth rate</span></span></label>
-                        <div class="input-wrapper">
-                            <i class="fas fa-percentage"></i>
-                            <input type="number" id="growth" placeholder="e.g., 10" min="0" max="100" step="0.1">
+                        <div id="simpleGrowthInput">
+                            <div class="input-wrapper">
+                                <i class="fas fa-percentage"></i>
+                                <input type="number" id="growth" placeholder="e.g., 10" min="0" max="100" step="0.1">
+                            </div>
+                        </div>
+                        <div id="perYearGrowthInputs" class="per-year-growth-inputs">
+                            <div class="input-group">
+                                <label for="growthYear1">Year 1 Growth (%)</label>
+                                <div class="input-wrapper">
+                                    <i class="fas fa-percentage"></i>
+                                    <input type="number" id="growthYear1" placeholder="e.g., 15" min="0" max="100" step="0.1">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label for="growthYear2">Year 2 Growth (%)</label>
+                                <div class="input-wrapper">
+                                    <i class="fas fa-percentage"></i>
+                                    <input type="number" id="growthYear2" placeholder="e.g., 12" min="0" max="100" step="0.1">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label for="growthYear3">Year 3 Growth (%)</label>
+                                <div class="input-wrapper">
+                                    <i class="fas fa-percentage"></i>
+                                    <input type="number" id="growthYear3" placeholder="e.g., 10" min="0" max="100" step="0.1">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label for="growthYear4">Year 4 Growth (%)</label>
+                                <div class="input-wrapper">
+                                    <i class="fas fa-percentage"></i>
+                                    <input type="number" id="growthYear4" placeholder="e.g., 8" min="0" max="100" step="0.1">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label for="growthYear5">Year 5 Growth (%)</label>
+                                <div class="input-wrapper">
+                                    <i class="fas fa-percentage"></i>
+                                    <input type="number" id="growthYear5" placeholder="e.g., 5" min="0" max="100" step="0.1">
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -428,8 +488,10 @@
                         </div>
                     </div>
 
-                    <button onclick="calculate()"><i class="fas fa-calculator"></i> Calculate Intrinsic Value</button>
-                    <button onclick="resetFields()" class="button-secondary"><i class="fas fa-redo"></i> Reset</button>
+                    <div class="button-group">
+                        <button onclick="calculate()"><i class="fas fa-calculator"></i> Calculate Intrinsic Value</button>
+                        <button onclick="resetFields()" class="button-secondary"><i class="fas fa-redo"></i> Reset</button>
+                    </div>
                 </div>
 
                 <div class="metrics-column" id="extra">
@@ -455,23 +517,23 @@
                 </div>
             </div>
 
-            <div class="math" id="math">
-                <p>Calculation details will appear here after you run the analysis.</p>
-            </div>
-
             <div class="recommendation-widget">
                 <h2><i class="fas fa-bullhorn"></i> Analyst Recommendations</h2>
-                <div class="finnhub-widget-container">
-                    <div id="widget-symbol" class="finnhub-widget" data-symbol="AAPL" data-theme="light" data-height="200"></div>
+                <div id="analyst-recommendations-content">
+                    <p>Enter a stock symbol and click "Calculate" to view analyst recommendations.</p>
                 </div>
+            </div>
+
+            <div class="math" id="math">
+                <p>Calculation details will appear here after you run the analysis.</p>
             </div>
         </div>
     </div>
 
-    <script src="https://widget.finnhub.io/widgets/stocks/recommendation.js" type="text/javascript"></script>
     <script>
         const API_KEY = "d0kuab9r01qhb02558rgd0kuab9r01qhb02558s0";
         const years = 5;
+        let isProGrowthMode = false;
 
         function formatMarketCap(marketCap) {
             if (!marketCap || marketCap === 0) return "N/A";
@@ -505,9 +567,46 @@
             return 0;
         }
 
+        function toggleGrowthInputMode() {
+            isProGrowthMode = !isProGrowthMode;
+            const simpleInput = document.getElementById('simpleGrowthInput');
+            const perYearInputs = document.getElementById('perYearGrowthInputs');
+            const toggleButton = document.getElementById('toggleGrowthMode');
+
+            if (isProGrowthMode) {
+                simpleInput.style.display = 'none';
+                perYearInputs.classList.add('active');
+                toggleButton.textContent = 'Simple';
+            } else {
+                simpleInput.style.display = 'block';
+                perYearInputs.classList.remove('active');
+                toggleButton.textContent = 'Pro';
+            }
+        }
+
         async function calculate() {
             const symbol = document.getElementById("symbol").value.toUpperCase();
-            const userGrowthRate = parseFloat(document.getElementById("growth").value) / 100;
+            let userGrowthRate;
+            let growthRatesPerYear = [];
+
+            if (isProGrowthMode) {
+                for (let i = 1; i <= years; i++) {
+                    const growthInput = document.getElementById(`growthYear${i}`);
+                    const rate = parseFloat(growthInput.value) / 100;
+                    if (isNaN(rate)) {
+                        showError(`Please enter a valid number for Year ${i} Growth Rate.`);
+                        return;
+                    }
+                    growthRatesPerYear.push(rate);
+                }
+            } else {
+                userGrowthRate = parseFloat(document.getElementById("growth").value) / 100;
+                if (isNaN(userGrowthRate)) {
+                    showError("Please enter a valid number for Estimated Annual Growth Rate.");
+                    return;
+                }
+            }
+
             const expectedPE = parseFloat(document.getElementById("pe").value);
             const discountRate = parseFloat(document.getElementById("discount").value) / 100;
 
@@ -515,7 +614,7 @@
                 showError("Please enter a stock symbol");
                 return;
             }
-            if (isNaN(userGrowthRate) || isNaN(expectedPE) || isNaN(discountRate)) {
+            if (isNaN(expectedPE) || isNaN(discountRate)) {
                 showError("Please enter valid numbers for all fields");
                 return;
             }
@@ -525,24 +624,27 @@
             const optimisticDiv = document.getElementById("optimistic");
             const metricsGrid = document.getElementById("metrics-grid");
             const mathDiv = document.getElementById("math");
-            const widgetDiv = document.getElementById("widget-symbol");
+            const analystRecDiv = document.getElementById("analyst-recommendations-content");
 
             resultDiv.innerHTML = `<h3><i class="fas fa-chart-line"></i> Base Scenario</h3><p><i class="fas fa-spinner fa-spin"></i> Loading data for ${symbol}...</p>`;
             pessimisticDiv.innerHTML = `<h3><i class="fas fa-frown"></i> Pessimistic Scenario</h3><p><i class="fas fa-spinner fa-spin"></i> Calculating...</p>`;
             optimisticDiv.innerHTML = `<h3><i class="fas fa-smile"></i> Optimistic Scenario</h3><p><i class="fas fa-spinner fa-spin"></i> Calculating...</p>`;
             metricsGrid.innerHTML = '<div class="metric-card"><i class="fas fa-spinner fa-spin"></i> Loading metrics...</div>';
             mathDiv.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Preparing calculation details...</p>';
+            analystRecDiv.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Loading recommendations...</p>';
 
             try {
-                const [profileRes, quoteRes, metricsRes] = await Promise.all([
+                const [profileRes, quoteRes, metricsRes, recommendationRes] = await Promise.all([
                     fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${API_KEY}`),
                     fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${API_KEY}`),
-                    fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${API_KEY}`)
+                    fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${API_KEY}`),
+                    fetch(`https://finnhub.io/api/v1/stock/recommendation?symbol=${symbol}&token=${API_KEY}`)
                 ]);
 
                 const profile = await profileRes.json();
                 const quote = await quoteRes.json();
                 const metrics = await metricsRes.json();
+                const recommendations = await recommendationRes.json();
 
                 if (!profile || !quote || !metrics || !quote.c || !metrics.metric || !metrics.metric["epsTTM"]) {
                     showError("Could not fetch complete data for this symbol. Please ensure the symbol is correct and try again.");
@@ -558,20 +660,22 @@
                 const week52High = quote.h || 0;
                 const week52Low = quote.l || 0;
 
-                function calculateIntrinsic(eps, growthRate, peRatio, discountRate) {
+                function calculateIntrinsic(eps, growthRates, peRatio, discountRate) {
                     let intrinsicValue = 0;
                     let futureEPSValues = [];
                     let discountedFutureValues = [];
+                    let currentEPS = eps;
 
-                    for (let t = 1; t <= years; t++) {
-                        const futureEPS = eps * Math.pow(1 + growthRate, t);
-                        const discounted = futureEPS / Math.pow(1 + discountRate, t);
+                    for (let t = 0; t < years; t++) {
+                        const growthRate = Array.isArray(growthRates) ? growthRates[t] : growthRates;
+                        currentEPS = currentEPS * (1 + growthRate);
+                        const discounted = currentEPS / Math.pow(1 + discountRate, t + 1);
                         intrinsicValue += discounted;
-                        futureEPSValues.push(futureEPS.toFixed(2));
+                        futureEPSValues.push(currentEPS.toFixed(2));
                         discountedFutureValues.push(discounted.toFixed(2));
                     }
 
-                    const terminalEPS = eps * Math.pow(1 + growthRate, years);
+                    const terminalEPS = currentEPS; // EPS at the end of the projection period
                     const terminalValue = terminalEPS * peRatio;
                     const discountedTerminal = terminalValue / Math.pow(1 + discountRate, years);
                     intrinsicValue += discountedTerminal;
@@ -586,9 +690,13 @@
                     };
                 }
 
-                const base = calculateIntrinsic(eps, userGrowthRate, expectedPE, discountRate);
-                const pessimistic = calculateIntrinsic(eps, Math.max(0, userGrowthRate - 0.02), Math.max(1, expectedPE - 2), discountRate);
-                const optimistic = calculateIntrinsic(eps, userGrowthRate + 0.02, expectedPE + 2, discountRate);
+                const baseGrowthRates = isProGrowthMode ? growthRatesPerYear : userGrowthRate;
+                const pessimisticGrowthRates = isProGrowthMode ? growthRatesPerYear.map(r => Math.max(0, r - 0.02)) : Math.max(0, userGrowthRate - 0.02);
+                const optimisticGrowthRates = isProGrowthMode ? growthRatesPerYear.map(r => r + 0.02) : userGrowthRate + 0.02;
+
+                const base = calculateIntrinsic(eps, baseGrowthRates, expectedPE, discountRate);
+                const pessimistic = calculateIntrinsic(eps, pessimisticGrowthRates, Math.max(1, expectedPE - 2), discountRate);
+                const optimistic = calculateIntrinsic(eps, optimisticGrowthRates, expectedPE + 2, discountRate);
 
                 const baseUpside = price > 0 ? ((base.intrinsicValue - price) / price * 100).toFixed(2) : "N/A";
                 const pessimisticUpside = price > 0 ? ((pessimistic.intrinsicValue - price) / price * 100).toFixed(2) : "N/A";
@@ -597,7 +705,7 @@
                 resultDiv.innerHTML = `
                     <h3><i class="fas fa-chart-line"></i> ${profile.name || symbol} - Base Scenario</h3>
                     <p>Expected P/E: <strong>${expectedPE}</strong></p>
-                    <p>Growth Rate: <strong>${(userGrowthRate * 100).toFixed(2)}%</strong></p>
+                    <p>Growth Rate: <strong>${isProGrowthMode ? 'Per Year' : (userGrowthRate * 100).toFixed(2) + '%'}</strong></p>
                     <p>Discount Rate: <strong>${(discountRate * 100).toFixed(2)}%</strong></p>
                     <div class="value-highlight ${baseUpside >= 0 ? 'positive' : 'negative'}">
                         <strong>$${base.intrinsicValue.toFixed(2)}</strong><br>
@@ -610,7 +718,7 @@
 
                 pessimisticDiv.innerHTML = `
                     <h3><i class="fas fa-frown"></i> Pessimistic Scenario</h3>
-                    <p>Growth Rate: <strong>${((userGrowthRate - 0.02) * 100).toFixed(2)}%</strong></p>
+                    <p>Growth Rate: <strong>${isProGrowthMode ? 'Per Year (Adjusted)' : ((userGrowthRate - 0.02) * 100).toFixed(2) + '%'}</strong></p>
                     <p>Future P/E: <strong>${expectedPE - 2}</strong></p>
                     <div class="value-highlight ${pessimisticUpside >= 0 ? 'positive' : 'negative'}" style="font-size: 1.2rem;">
                         <strong>$${pessimistic.intrinsicValue.toFixed(2)}</strong><br>
@@ -620,7 +728,7 @@
 
                 optimisticDiv.innerHTML = `
                     <h3><i class="fas fa-smile"></i> Optimistic Scenario</h3>
-                    <p>Growth Rate: <strong>${((userGrowthRate + 0.02) * 100).toFixed(2)}%</strong></p>
+                    <p>Growth Rate: <strong>${isProGrowthMode ? 'Per Year (Adjusted)' : ((userGrowthRate + 0.02) * 100).toFixed(2) + '%'}</strong></p>
                     <p>Future P/E: <strong>${expectedPE + 2}</strong></p>
                     <div class="value-highlight ${optimisticUpside >= 0 ? 'positive' : 'negative'}" style="font-size: 1.2rem;">
                         <strong>$${optimistic.intrinsicValue.toFixed(2)}</strong><br>
@@ -666,7 +774,7 @@
 
                 let mathContent = `Valuation Formula (for Base Scenario):
 
-EPS: $${eps.toFixed(2)} | Growth: ${(userGrowthRate * 100).toFixed(2)}% | Discount: ${(discountRate * 100).toFixed(2)}% | Future P/E: ${expectedPE} | Years: ${years}
+EPS: $${eps.toFixed(2)} | Growth: ${isProGrowthMode ? 'Per Year: [' + growthRatesPerYear.map(r => (r * 100).toFixed(2) + '%').join(', ') + ']' : (userGrowthRate * 100).toFixed(2) + '%'} | Discount: ${(discountRate * 100).toFixed(2)}% | Future P/E: ${expectedPE} | Years: ${years}
 
 Step 1: Future EPS (EPS × (1+G)^t):
 Y1: $${base.futureEPSValues[0]} | Y2: $${base.futureEPSValues[1]} | Y3: $${base.futureEPSValues[2]} | Y4: $${base.futureEPSValues[3]} | Y5: $${base.futureEPSValues[4]}
@@ -686,20 +794,33 @@ Intrinsic Value = (Sum PV Y1-${years}) + Disc. TV = $${base.intrinsicValue.toFix
 
                 mathDiv.textContent = mathContent;
 
-                if (widgetDiv) {
-                    widgetDiv.setAttribute("data-symbol", symbol);
-                    widgetDiv.innerHTML = "";
+                if (recommendations && recommendations.length > 0) {
+                    const latest = recommendations[0];
+                    analystRecDiv.innerHTML = `
+                        <p><strong>Period:</strong> ${latest.period || 'N/A'}</p>
+                        <div class="analyst-recommendations-grid">
+                            <span><strong>Buy:</strong> ${latest.buy || 0}</span>
+                            <span><strong>Hold:</strong> ${latest.hold || 0}</span>
+                            <span><strong>Sell:</strong> ${latest.sell || 0}</span>
+                        </div>
+                    `;
+                } else {
+                    analystRecDiv.innerHTML = '<p>No analyst recommendations available.</p>';
                 }
 
             } catch (error) {
                 showError("Error fetching data. Please check the stock symbol and your internet connection.");
                 console.error("Calculation error:", error);
+                analystRecDiv.innerHTML = '<p style="color: var(--error-color);">Error loading recommendations.</p>';
             }
         }
 
         function resetFields() {
             document.getElementById("symbol").value = "";
             document.getElementById("growth").value = "";
+            for (let i = 1; i <= years; i++) {
+                document.getElementById(`growthYear${i}`).value = "";
+            }
             document.getElementById("pe").value = "";
             document.getElementById("discount").value = "";
 
@@ -721,6 +842,13 @@ Intrinsic Value = (Sum PV Y1-${years}) + Disc. TV = $${base.intrinsicValue.toFix
             document.getElementById("math").innerHTML = `
                 <p>Calculation details will appear here after you run the analysis.</p>
             `;
+            document.getElementById("analyst-recommendations-content").innerHTML = `
+                <p>Enter a stock symbol and click "Calculate" to view analyst recommendations.</p>
+            `;
+            // Ensure the growth input mode is reset to simple
+            if (isProGrowthMode) {
+                toggleGrowthInputMode(); // Toggle back to simple mode if currently in pro mode
+            }
         }
 
         function showError(message) {
@@ -736,6 +864,7 @@ Intrinsic Value = (Sum PV Y1-${years}) + Disc. TV = $${base.intrinsicValue.toFix
                 </div>
             `;
             document.getElementById("math").innerHTML = "";
+            document.getElementById("analyst-recommendations-content").innerHTML = `<p style="color: var(--error-color);">Error loading recommendations.</p>`;
         }
     </script>
 </body>
