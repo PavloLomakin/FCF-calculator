@@ -487,6 +487,51 @@
         const years = 5; // Number of years for growth calculation
 
         /**
+         * Formats market capitalization value from Finnhub API
+         * @param {number|string} marketCap - The market cap value from API
+         * @returns {string} Formatted market cap (e.g., "510B", "3.39B")
+         */
+        function formatMarketCap(marketCap) {
+            if (!marketCap || marketCap === 0) return "N/A";
+            
+            // Convert to number if it's a string
+            if (typeof marketCap === 'string') {
+                // Remove any non-numeric characters except decimal point
+                marketCap = marketCap.replace(/[^0-9.]/g, '');
+                marketCap = parseFloat(marketCap);
+            }
+            
+            // Handle numeric values - always show in billions for large companies
+            if (typeof marketCap === 'number') {
+                if (marketCap >= 1000000000) {
+                    return '$' + (marketCap / 1000000000).toFixed(2) + 'B';
+                } else if (marketCap >= 1000000) {
+                    return '$' + (marketCap / 1000000).toFixed(2) + 'M';
+                }
+                return '$' + marketCap.toFixed(2);
+            }
+            
+            return "N/A";
+        }
+
+        /**
+         * Gets the raw market cap value from Finnhub metrics
+         */
+        function getMarketCapValue(metrics) {
+            // First try the standard marketCapitalization field
+            if (metrics.metric["marketCapitalization"]) {
+                return metrics.metric["marketCapitalization"];
+            }
+            
+            // If not found, try to calculate from share price and shares outstanding
+            if (metrics.metric["currentPrice"] && metrics.metric["shareOutstanding"]) {
+                return metrics.metric["currentPrice"] * metrics.metric["shareOutstanding"];
+            }
+            
+            return 0;
+        }
+
+        /**
          * Calculates the intrinsic value of a stock based on user inputs and fetched data.
          */
         async function calculate() {
@@ -545,7 +590,7 @@
                 const currentPE = eps > 0 ? (price / eps).toFixed(2) : "N/A"; // Current P/E ratio
                 const forwardPE = metrics.metric["peExclExtraTTM"] || "N/A"; // Forward P/E (if available)
                 const dividendYield = (metrics.metric["dividendYieldIndicatedAnnual"] || 0).toFixed(2);
-                const marketCap = Number(metrics.metric["marketCapitalization"] || 0);
+                const marketCap = getMarketCapValue(metrics); // Use the new function
                 const week52High = quote.h || 0;
                 const week52Low = quote.l || 0;
 
@@ -635,14 +680,15 @@
                 `;
 
                 // Display additional metrics in a grid
+                const marketCapFormatted = formatMarketCap(marketCap);
                 metricsGrid.innerHTML = `
                     <div class="metric-card">
                         <h4>Current Price</h4>
                         <p>$${price.toFixed(2)}</p>
                     </div>
                     <div class="metric-card">
-                        <h4>Market Cap</h4>
-                        <p>$${marketCap >= 1000000000 ? (marketCap/1000000000).toFixed(2)+'B' : (marketCap/1000000).toFixed(2)+'M'}</p>
+                        <h4>Market Cap, M</h4>
+                        <p>${marketCapFormatted}</p>
                     </div>
                     <div class="metric-card">
                         <h4>P/E Ratio</h4>
