@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Stock Analysis Tool</title>
+  <!-- Google Fonts & Font Awesome -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <style>
+    :root {
+      --primary-color: #2E7D32;
+      --primary-light: #4CAF50;
+      --background-light: #f8fafc;
+      --background-dark: #e8edf2;
+      --text-color: #2d3748;
+      --text-light: #4a5568;
+      --border-color: #e2e8f0;
+      --shadow-light: rgba(0, 0, 0, 0.05);
+      --card-radius: 12px;
+      --transition: all 0.2s ease-in-out;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Roboto', sans-serif;
+      max-width: 1200px;
+      margin: 20px auto;
+      background: var(--background-light);
+      color: var(--text-color);
+      line-height: 1.5;
+    }
+    .container {
+      background: #fff;
+      border-radius: var(--card-radius);
+      box-shadow: 0 4px 20px var(--shadow-light);
+      overflow: hidden;
+    }
+    .header {
+      background: var(--primary-light);
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 2rem;
+    }
+    .header p {
+      margin: 5px 0 0;
+    }
+    .content {
+      padding: 20px;
+    }
+    .input-section {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .input-column, .metrics-column {
+      flex: 1;
+      min-width: 280px;
+    }
+    .input-group {
+      margin-bottom: 16px;
+    }
+    .input-group label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+    .input-wrapper {
+      display: flex;
+      align-items: center;
+      background: var(--background-dark);
+      padding: 10px;
+      border-radius: var(--card-radius);
+    }
+    .input-wrapper i { margin-right: 8px; color: var(--text-light); }
+    .input-wrapper input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 1rem;
+      color: var(--text-color);
+    }
+    button {
+      background: var(--primary-color);
+      color: #fff;
+      border: none;
+      padding: 12px 20px;
+      border-radius: var(--card-radius);
+      font-size: 1rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    button:hover {
+      background: var(--primary-light);
+    }
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
+      margin-top: 12px;
+    }
+    .metric-item {
+      background: #fff;
+      padding: 12px;
+      border-radius: var(--card-radius);
+      box-shadow: 0 2px 8px var(--shadow-light);
+      text-align: center;
+      font-size: 0.9rem;
+    }
+    .metric-item h4 {
+      margin: 0 0 6px;
+      font-size: 1rem;
+      color: var(--primary-color);
+    }
+    .results {
+      margin-top: 24px;
+      text-align: center;
+    }
+    .results h3 {
+      margin-bottom: 12px;
+      color: var(--primary-color);
+    }
+    .results p {
+      font-size: 1.2rem;
+      margin: 6px 0;
+    }
+    @media (max-width: 768px) {
+      .metrics-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 480px) {
+      .metrics-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1><i class="fas fa-chart-pie"></i> Stock Analysis Tool</h1>
+      <p>Automated scoring based on key financial metrics</p>
+    </div>
+    <div class="content">
+      <div class="input-section">
+        <div class="input-column">
+          <div class="input-group">
+            <label for="symbol">
+              Stock Symbol
+              <span class="tooltip">
+                <i class="fas fa-info-circle"></i>
+                <span class="tooltiptext">Enter your ticker (e.g. AAPL)</span>
+              </span>
+            </label>
+            <div class="input-wrapper">
+              <i class="fas fa-tag"></i>
+              <input type="text" id="symbol" placeholder="e.g. AAPL">
+            </div>
+          </div>
+          <button onclick="analyzeStock()">
+            <i class="fas fa-check-circle"></i> Run Analysis
+          </button>
+        </div>
+
+        <div class="metrics-column">
+          <h3><i class="fas fa-chart-bar"></i> Metrics & Scores</h3>
+          <div id="metrics-grid" class="metrics-grid">
+            <!-- JS will insert each metric-item here -->
+          </div>
+        </div>
+      </div>
+
+      <div class="results" id="results">
+        <!-- Final score & recommendation -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const FINNHUB_API = 'https://finnhub.io/api/v1';
+    const API_KEY = 'd0kuab9r01qhb02558rgd0kuab9r01qhb02558s0';
+
+    // map total score to recommendation
+    function recommendation(score) {
+      if (score >= 50)    return ['Strong Buy', '#388E3C'];
+      if (score >= 40)    return ['Buy', '#4CAF50'];
+      if (score >= 30)    return ['Weak Buy', '#F57C00'];
+      if (score >= 20)    return ['Not Recommended', '#D32F2F'];
+                         return ['Strong Not Buy', '#B71C1C'];
+    }
+
+    // simple scoring functions
+    function scorePE(pe) {
+      if (pe <= 15)     return 5;
+      if (pe <= 20)     return 4;
+      if (pe <= 25)     return 3;
+      if (pe <= 30)     return 2;
+      return 1;
+    }
+    function scoreForwardPE(fpe) {
+      if (fpe <= 15)    return 5;
+      if (fpe <= 20)    return 4;
+      if (fpe <= 25)    return 3;
+      if (fpe <= 30)    return 2;
+      return 1;
+    }
+    function scorePB(pb) {
+      if (pb <= 1)      return 5;
+      if (pb <= 2)      return 4;
+      if (pb <= 3)      return 3;
+      if (pb <= 4)      return 2;
+      return 1;
+    }
+    function scorePEG(peg) {
+      if (peg <= 1)     return 5;
+      if (peg <= 1.5)   return 4;
+      if (peg <= 2)     return 3;
+      return 1;
+    }
+    function scoreDebtEquity(de) {
+      if (de <= 0.5)    return 5;
+      if (de <= 1)      return 4;
+      if (de <= 2)      return 3;
+      return 1;
+    }
+    function scoreROE(roe) {
+      if (roe >= 20)    return 5;
+      if (roe >= 15)    return 4;
+      if (roe >= 10)    return 3;
+      if (roe >= 5)     return 2;
+      return 1;
+    }
+
+    async function analyzeStock() {
+      const symbol = document.getElementById('symbol').value.trim().toUpperCase();
+      if (!symbol) return alert('Please enter a ticker symbol.');
+
+      // clear previous
+      document.getElementById('metrics-grid').innerHTML = '';
+      document.getElementById('results').innerHTML = '';
+
+      // fetch quote & fundamentals
+      const [quoteRes, metricsRes] = await Promise.all([
+        fetch(`${FINNHUB_API}/quote?symbol=${symbol}&token=${API_KEY}`),
+        fetch(`${FINNHUB_API}/stock/metric?symbol=${symbol}&metric=all&token=${API_KEY}`)
+      ]);
+      const quote = await quoteRes.json();
+      const metrics = (await metricsRes.json()).metric || {};
+
+      // extract relevant raw values
+      const pe   = metrics['peRatio'] || quote.c / quote.epsBasicAnnual; 
+      const fpe  = metrics['forwardPE'] || metrics['peRatio']; 
+      const pb   = metrics['pbRatio'] || metrics['priceToBookRatio'];
+      const peg  = metrics['pegAnnual'] || metrics['pegRatio'];
+      const de   = metrics['debtEquityRatio'] || metrics['debtToEquity'];
+      const roe  = metrics['roe'] * 100; // convert to percent
+
+      // compute individual scores
+      const scores = {
+        'P/E Ratio':            [pe,   scorePE(pe)],
+        'Forward P/E':          [fpe,  scoreForwardPE(fpe)],
+        'P/B Ratio':            [pb,   scorePB(pb)],
+        'PEG Ratio':            [peg,  scorePEG(peg)],
+        'Debt/Equity':          [de,   scoreDebtEquity(de)],
+        'Return on Equity (%)': [roe,  scoreROE(roe)]
+      };
+
+      // populate grid
+      let total = 0;
+      const grid = document.getElementById('metrics-grid');
+      for (const [name, [val, sc]] of Object.entries(scores)) {
+        total += sc;
+        const item = document.createElement('div');
+        item.className = 'metric-item';
+        item.innerHTML = `
+          <h4>${name}</h4>
+          <p>${(val !== undefined && !isNaN(val)) ? val.toFixed(2) : 'N/A'}</p>
+          <p>Score: <strong>${sc}</strong></p>
+        `;
+        grid.appendChild(item);
+      }
+
+      // show final recommendation
+      const [recText, recColor] = recommendation(total);
+      const results = document.getElementById('results');
+      results.innerHTML = `
+        <h3>Your Total Score: <span style="color:${recColor}">${total}</span></h3>
+        <p style="font-size:1.3rem; color:${recColor};"><strong>${recText}</strong></p>
+      `;
+    }
+  </script>
+</body>
+</html>
