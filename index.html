@@ -4,31 +4,28 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Intrinsic Value Calculator</title>
-    <!-- Google Fonts: Roboto for general text, Roboto Mono for code/math -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Define CSS Variables for easy theme management */
         :root {
-            --primary-color: #2E7D32; /* Darker green for better contrast */
-            --primary-light: #4CAF50; /* Lighter green for accents */
-            --secondary-color: #1565C0; /* Darker blue for better contrast */
-            --secondary-light: #2196F3; /* Lighter blue for accents */
-            --background-light: #f8fafc; /* Very light background */
-            --background-dark: #e8edf2; /* Slightly darker background for math section */
-            --text-color: #2d3748; /* Darker grey for better readability */
-            --text-light: #4a5568; /* Lighter text */
-            --border-color: #e2e8f0; /* Very light grey for borders */
-            --shadow-light: rgba(0, 0, 0, 0.05); /* Very light shadow */
-            --shadow-medium: rgba(0, 0, 0, 0.1); /* Medium shadow */
-            --error-color: #D32F2F; /* Darker red for better contrast */
-            --success-color: #388E3C; /* Darker green for better contrast */
-            --warning-color: #F57C00; /* Darker amber for better contrast */
-            --card-radius: 12px; /* Consistent border radius */
-            --transition: all 0.2s ease-in-out; /* Smooth transitions */
+            --primary-color: #2E7D32;
+            --primary-light: #4CAF50;
+            --secondary-color: #1565C0;
+            --secondary-light: #2196F3;
+            --background-light: #f8fafc;
+            --background-dark: #e8edf2;
+            --text-color: #2d3748;
+            --text-light: #4a5568;
+            --border-color: #e2e8f0;
+            --shadow-light: rgba(0, 0, 0, 0.05);
+            --shadow-medium: rgba(0, 0, 0, 0.1);
+            --error-color: #D32F2F;
+            --success-color: #388E3C;
+            --warning-color: #F57C00;
+            --card-radius: 12px;
+            --transition: all 0.2s ease-in-out;
         }
 
-        /* Basic Body Styling */
         body {
             font-family: 'Roboto', sans-serif;
             max-width: 1200px;
@@ -40,7 +37,6 @@
             box-sizing: border-box;
         }
 
-        /* Main container for content */
         .container {
             background: white;
             border-radius: var(--card-radius);
@@ -49,7 +45,6 @@
             margin-bottom: 20px;
         }
 
-        /* Header styling */
         .header {
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             color: white;
@@ -75,12 +70,10 @@
             font-size: 1rem;
         }
 
-        /* Main content area */
         .content {
             padding: 25px 30px;
         }
 
-        /* Input section */
         .input-section {
             display: flex;
             gap: 30px;
@@ -98,7 +91,6 @@
             min-width: 300px;
         }
 
-        /* Form Input Group Styling */
         .input-group {
             margin-bottom: 15px;
         }
@@ -143,7 +135,6 @@
             outline: none;
         }
 
-        /* Button Styling */
         button {
             background-color: var(--primary-color);
             color: white;
@@ -172,7 +163,15 @@
             transform: translateY(0);
         }
 
-        /* Results Grid Layout */
+        .button-secondary {
+            background-color: var(--secondary-color);
+        }
+
+        .button-secondary:hover {
+            background-color: var(--secondary-color);
+            box-shadow: 0 4px 12px rgba(21, 101, 192, 0.2);
+        }
+
         .results-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -180,7 +179,6 @@
             margin-top: 25px;
         }
 
-        /* Styling for all output sections */
         .output {
             background: white;
             padding: 20px;
@@ -196,7 +194,6 @@
             box-shadow: 0 5px 15px var(--shadow-medium);
         }
 
-        /* Specific colors for scenario outputs */
         .output.pessimistic {
             border-top-color: var(--error-color);
         }
@@ -205,7 +202,6 @@
             border-top-color: var(--success-color);
         }
 
-        /* Strong text within output sections */
         .output strong {
             color: var(--secondary-color);
             font-weight: 600;
@@ -217,7 +213,6 @@
             color: var(--success-color);
         }
 
-        /* Heading within output sections */
         .output h3 {
             font-size: 1.1rem;
             margin-top: 0;
@@ -229,7 +224,6 @@
             gap: 8px;
         }
 
-        /* Math Section Styling */
         .math {
             font-family: 'Roboto Mono', monospace;
             background: var(--background-dark);
@@ -243,7 +237,6 @@
             overflow-x: auto;
         }
 
-        /* Metrics Section Styling */
         .metrics-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -278,7 +271,6 @@
             color: var(--text-color);
         }
 
-        /* Recommendation Widget Styling */
         .recommendation-widget {
             margin-top: 30px;
             padding: 20px;
@@ -298,7 +290,6 @@
             gap: 10px;
         }
 
-        /* Finnhub widget container */
         .finnhub-widget-container {
             height: 200px;
             overflow: hidden;
@@ -306,7 +297,6 @@
             box-shadow: 0 2px 8px var(--shadow-light);
         }
 
-        /* Value highlight */
         .value-highlight {
             font-size: 1.4rem;
             font-weight: 700;
@@ -325,7 +315,6 @@
             background-color: rgba(211, 47, 47, 0.1);
         }
 
-        /* Tooltip styling */
         .tooltip {
             position: relative;
             display: inline-block;
@@ -363,7 +352,6 @@
             opacity: 1;
         }
 
-        /* Responsive Design */
         @media (max-width: 768px) {
             .header {
                 padding: 20px;
@@ -441,13 +429,13 @@
                     </div>
 
                     <button onclick="calculate()"><i class="fas fa-calculator"></i> Calculate Intrinsic Value</button>
+                    <button onclick="resetFields()" class="button-secondary"><i class="fas fa-redo"></i> Reset</button>
                 </div>
 
                 <div class="metrics-column" id="extra">
                     <h3><i class="fas fa-chart-bar"></i> Stock Metrics</h3>
                     <p>Enter a stock symbol and click "Calculate" to view metrics</p>
                     <div class="metrics-grid" id="metrics-grid">
-                        <!-- Metrics will be populated here by JavaScript -->
                     </div>
                 </div>
             </div>
@@ -482,26 +470,17 @@
 
     <script src="https://widget.finnhub.io/widgets/stocks/recommendation.js" type="text/javascript"></script>
     <script>
-        // Your Finnhub API Key
         const API_KEY = "d0kuab9r01qhb02558rgd0kuab9r01qhb02558s0";
-        const years = 5; // Number of years for growth calculation
+        const years = 5;
 
-        /**
-         * Formats market capitalization value from Finnhub API
-         * @param {number|string} marketCap - The market cap value from API
-         * @returns {string} Formatted market cap (e.g., "510B", "3.39B")
-         */
         function formatMarketCap(marketCap) {
             if (!marketCap || marketCap === 0) return "N/A";
             
-            // Convert to number if it's a string
             if (typeof marketCap === 'string') {
-                // Remove any non-numeric characters except decimal point
                 marketCap = marketCap.replace(/[^0-9.]/g, '');
                 marketCap = parseFloat(marketCap);
             }
             
-            // Handle numeric values - always show in billions for large companies
             if (typeof marketCap === 'number') {
                 if (marketCap >= 1000000000) {
                     return '$' + (marketCap / 1000000000).toFixed(2) + 'B';
@@ -514,16 +493,11 @@
             return "N/A";
         }
 
-        /**
-         * Gets the raw market cap value from Finnhub metrics
-         */
         function getMarketCapValue(metrics) {
-            // First try the standard marketCapitalization field
             if (metrics.metric["marketCapitalization"]) {
                 return metrics.metric["marketCapitalization"];
             }
             
-            // If not found, try to calculate from share price and shares outstanding
             if (metrics.metric["currentPrice"] && metrics.metric["shareOutstanding"]) {
                 return metrics.metric["currentPrice"] * metrics.metric["shareOutstanding"];
             }
@@ -531,17 +505,12 @@
             return 0;
         }
 
-        /**
-         * Calculates the intrinsic value of a stock based on user inputs and fetched data.
-         */
         async function calculate() {
-            // Get user inputs from the form
             const symbol = document.getElementById("symbol").value.toUpperCase();
             const userGrowthRate = parseFloat(document.getElementById("growth").value) / 100;
             const expectedPE = parseFloat(document.getElementById("pe").value);
             const discountRate = parseFloat(document.getElementById("discount").value) / 100;
 
-            // Validate inputs
             if (!symbol) {
                 showError("Please enter a stock symbol");
                 return;
@@ -551,7 +520,6 @@
                 return;
             }
 
-            // Get references to output divs
             const resultDiv = document.getElementById("result");
             const pessimisticDiv = document.getElementById("pessimistic");
             const optimisticDiv = document.getElementById("optimistic");
@@ -559,7 +527,6 @@
             const mathDiv = document.getElementById("math");
             const widgetDiv = document.getElementById("widget-symbol");
 
-            // Clear previous results and show a loading indicator
             resultDiv.innerHTML = `<h3><i class="fas fa-chart-line"></i> Base Scenario</h3><p><i class="fas fa-spinner fa-spin"></i> Loading data for ${symbol}...</p>`;
             pessimisticDiv.innerHTML = `<h3><i class="fas fa-frown"></i> Pessimistic Scenario</h3><p><i class="fas fa-spinner fa-spin"></i> Calculating...</p>`;
             optimisticDiv.innerHTML = `<h3><i class="fas fa-smile"></i> Optimistic Scenario</h3><p><i class="fas fa-spinner fa-spin"></i> Calculating...</p>`;
@@ -567,47 +534,35 @@
             mathDiv.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Preparing calculation details...</p>';
 
             try {
-                // Fetch stock data concurrently using Promise.all
                 const [profileRes, quoteRes, metricsRes] = await Promise.all([
                     fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${API_KEY}`),
                     fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${API_KEY}`),
                     fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${API_KEY}`)
                 ]);
 
-                // Parse JSON responses
                 const profile = await profileRes.json();
                 const quote = await quoteRes.json();
                 const metrics = await metricsRes.json();
 
-                // Validate essential data
                 if (!profile || !quote || !metrics || !quote.c || !metrics.metric || !metrics.metric["epsTTM"]) {
                     showError("Could not fetch complete data for this symbol. Please ensure the symbol is correct and try again.");
                     return;
                 }
 
-                const eps = metrics.metric["epsTTM"] || 0; // Earnings Per Share (Trailing Twelve Months)
-                const price = quote.c || 0; // Current stock price
-                const currentPE = eps > 0 ? (price / eps).toFixed(2) : "N/A"; // Current P/E ratio
-                const forwardPE = metrics.metric["peExclExtraTTM"] || "N/A"; // Forward P/E (if available)
+                const eps = metrics.metric["epsTTM"] || 0;
+                const price = quote.c || 0;
+                const currentPE = eps > 0 ? (price / eps).toFixed(2) : "N/A";
+                const forwardPE = metrics.metric["peExclExtraTTM"] || "N/A";
                 const dividendYield = (metrics.metric["dividendYieldIndicatedAnnual"] || 0).toFixed(2);
-                const marketCap = getMarketCapValue(metrics); // Use the new function
+                const marketCap = getMarketCapValue(metrics);
                 const week52High = quote.h || 0;
                 const week52Low = quote.l || 0;
 
-                /**
-                 * Calculates the intrinsic value of a stock using a discounted cash flow-like model.
-                 * @param {number} eps - Earnings Per Share.
-                 * @param {number} growthRate - Annual growth rate (as a decimal).
-                 * @param {number} peRatio - Expected future P/E ratio.
-                 * @param {number} discountRate - Discount rate (as a decimal).
-                 * @returns {object} Contains intrinsic value and intermediate calculation steps.
-                 */
                 function calculateIntrinsic(eps, growthRate, peRatio, discountRate) {
                     let intrinsicValue = 0;
-                    let futureEPSValues = []; // To store EPS for each projected year
-                    let discountedFutureValues = []; // To store discounted EPS for each year
+                    let futureEPSValues = [];
+                    let discountedFutureValues = [];
 
-                    // Calculate discounted future EPS for 'years' period
                     for (let t = 1; t <= years; t++) {
                         const futureEPS = eps * Math.pow(1 + growthRate, t);
                         const discounted = futureEPS / Math.pow(1 + discountRate, t);
@@ -616,7 +571,6 @@
                         discountedFutureValues.push(discounted.toFixed(2));
                     }
 
-                    // Calculate Terminal Value (value of the company beyond the 'years' period)
                     const terminalEPS = eps * Math.pow(1 + growthRate, years);
                     const terminalValue = terminalEPS * peRatio;
                     const discountedTerminal = terminalValue / Math.pow(1 + discountRate, years);
@@ -632,17 +586,14 @@
                     };
                 }
 
-                // Calculate intrinsic value for base, pessimistic, and optimistic scenarios
                 const base = calculateIntrinsic(eps, userGrowthRate, expectedPE, discountRate);
                 const pessimistic = calculateIntrinsic(eps, Math.max(0, userGrowthRate - 0.02), Math.max(1, expectedPE - 2), discountRate);
                 const optimistic = calculateIntrinsic(eps, userGrowthRate + 0.02, expectedPE + 2, discountRate);
 
-                // Calculate upside/downside potential
                 const baseUpside = price > 0 ? ((base.intrinsicValue - price) / price * 100).toFixed(2) : "N/A";
                 const pessimisticUpside = price > 0 ? ((pessimistic.intrinsicValue - price) / price * 100).toFixed(2) : "N/A";
                 const optimisticUpside = price > 0 ? ((optimistic.intrinsicValue - price) / price * 100).toFixed(2) : "N/A";
 
-                // Display results in the main output div
                 resultDiv.innerHTML = `
                     <h3><i class="fas fa-chart-line"></i> ${profile.name || symbol} - Base Scenario</h3>
                     <p>Expected P/E: <strong>${expectedPE}</strong></p>
@@ -657,7 +608,6 @@
                     </p>
                 `;
 
-                // Display pessimistic scenario results
                 pessimisticDiv.innerHTML = `
                     <h3><i class="fas fa-frown"></i> Pessimistic Scenario</h3>
                     <p>Growth Rate: <strong>${((userGrowthRate - 0.02) * 100).toFixed(2)}%</strong></p>
@@ -668,7 +618,6 @@
                     </div>
                 `;
 
-                // Display optimistic scenario results
                 optimisticDiv.innerHTML = `
                     <h3><i class="fas fa-smile"></i> Optimistic Scenario</h3>
                     <p>Growth Rate: <strong>${((userGrowthRate + 0.02) * 100).toFixed(2)}%</strong></p>
@@ -679,7 +628,6 @@
                     </div>
                 `;
 
-                // Display additional metrics in a grid
                 const marketCapFormatted = formatMarketCap(marketCap);
                 metricsGrid.innerHTML = `
                     <div class="metric-card">
@@ -716,7 +664,6 @@
                     </div>
                 `;
 
-                // Display the detailed valuation formula and steps
                 let mathContent = `Valuation Formula (for Base Scenario):
 
 EPS: $${eps.toFixed(2)} | Growth: ${(userGrowthRate * 100).toFixed(2)}% | Discount: ${(discountRate * 100).toFixed(2)}% | Future P/E: ${expectedPE} | Years: ${years}
@@ -739,16 +686,41 @@ Intrinsic Value = (Sum PV Y1-${years}) + Disc. TV = $${base.intrinsicValue.toFix
 
                 mathDiv.textContent = mathContent;
 
-                // Update the Finnhub widget with the new stock symbol
                 if (widgetDiv) {
                     widgetDiv.setAttribute("data-symbol", symbol);
-                    widgetDiv.innerHTML = ""; // Clear content to trigger a refresh
+                    widgetDiv.innerHTML = "";
                 }
 
             } catch (error) {
                 showError("Error fetching data. Please check the stock symbol and your internet connection.");
                 console.error("Calculation error:", error);
             }
+        }
+
+        function resetFields() {
+            document.getElementById("symbol").value = "";
+            document.getElementById("growth").value = "";
+            document.getElementById("pe").value = "";
+            document.getElementById("discount").value = "";
+
+            document.getElementById("result").innerHTML = `
+                <h3><i class="fas fa-chart-line"></i> Base Scenario</h3>
+                <p>Enter values and click "Calculate" to see results</p>
+            `;
+            document.getElementById("pessimistic").innerHTML = `
+                <h3><i class="fas fa-frown"></i> Pessimistic Scenario</h3>
+                <p>Results will appear here after calculation</p>
+            `;
+            document.getElementById("optimistic").innerHTML = `
+                <h3><i class="fas fa-smile"></i> Optimistic Scenario</h3>
+                <p>Results will appear here after calculation</p>
+            `;
+            document.getElementById("metrics-grid").innerHTML = `
+                <p>Enter a stock symbol and click "Calculate" to view metrics</p>
+            `;
+            document.getElementById("math").innerHTML = `
+                <p>Calculation details will appear here after you run the analysis.</p>
+            `;
         }
 
         function showError(message) {
