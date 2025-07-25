@@ -1,6 +1,3 @@
-Here's the updated HTML code with the "Русский" button and the "Checklist" button, including the necessary styling and basic JavaScript for the "Checklist" button.
-
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -551,7 +548,7 @@ Here's the updated HTML code with the "Русский" button and the "Checklist
     </div>
 
     <script>
-        const API_KEY = "d0kuab9r01qhb02558rgd0kuab9r01qhb02558s0";
+        const API_KEY = "d0kuab9r01qhb02558rgd0kuab9r01qhb02558s0"; // Keep this as is or replace if you have a new one
         const years = 5;
         let isProGrowthMode = false;
         let isRussian = false; // New state variable for language
@@ -762,333 +759,398 @@ Here's the updated HTML code with the "Русский" button and the "Checklist
 
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('russianButton').addEventListener('click', switchLanguage);
-            document.getElementById('checklistButton').addEventListener('click', () => {
-                window.open('https://pavlolomakin.github.io/Invest.Checklist/', '_blank');
-            });
-            translatePage(); // Initial load to set default language (English)
+
+            // NEW CODE FOR CHECKLIST BUTTON
+            const checklistButton = document.getElementById('checklistButton');
+            if (checklistButton) {
+                checklistButton.addEventListener('click', () => {
+                    // This will open 'Invest.Checklist.html' in the same window/tab
+                    window.location.href = 'Invest.Checklist.html';
+                });
+            }
         });
 
-        function formatMarketCap(marketCap) {
-            if (!marketCap || marketCap === 0) return "N/A";
-            
-            if (typeof marketCap === 'string') {
-                marketCap = marketCap.replace(/[^0-9.]/g, '');
-                marketCap = parseFloat(marketCap);
-            }
-            
-            if (typeof marketCap === 'number') {
-                if (marketCap >= 1000000000) {
-                    return '$' + (marketCap / 1000000000).toFixed(2) + 'B';
-                } else if (marketCap >= 1000000) {
-                    return '$' + (marketCap / 1000000).toFixed(2) + 'M';
-                }
-                return '$' + marketCap.toFixed(2);
-            }
-            
-            return "N/A";
-        }
-
-        function getMarketCapValue(metrics) {
-            if (metrics.metric["marketCapitalization"]) {
-                return metrics.metric["marketCapitalization"];
-            }
-            
-            if (metrics.metric["currentPrice"] && metrics.metric["shareOutstanding"]) {
-                return metrics.metric["currentPrice"] * metrics.metric["shareOutstanding"];
-            }
-            
-            return 0;
-        }
-
+        // Placeholder functions from your original code (if they were not provided)
+        // You'll need to fill these in with your actual calculator logic
         function toggleGrowthInputMode() {
             isProGrowthMode = !isProGrowthMode;
             const simpleInput = document.getElementById('simpleGrowthInput');
             const perYearInputs = document.getElementById('perYearGrowthInputs');
             const toggleButton = document.getElementById('toggleGrowthMode');
+            const lang = isRussian ? 'ru' : 'en';
+            const t = translations[lang];
 
             if (isProGrowthMode) {
                 simpleInput.style.display = 'none';
                 perYearInputs.classList.add('active');
-                toggleButton.textContent = isRussian ? translations.ru.basicButton : translations.en.basicButton;
+                toggleButton.textContent = t.basicButton;
             } else {
                 simpleInput.style.display = 'block';
                 perYearInputs.classList.remove('active');
-                toggleButton.textContent = isRussian ? translations.ru.proButton : translations.en.proButton;
+                toggleButton.textContent = t.proButton;
             }
         }
-
-        function showError(message) {
-            const resultDiv = document.getElementById("result");
-            const pessimisticDiv = document.getElementById("pessimistic");
-            const optimisticDiv = document.getElementById("optimistic");
-            const metricsGrid = document.getElementById("metrics-grid");
-            const mathDiv = document.getElementById("math");
-            const analystRecDiv = document.getElementById("analyst-recommendations-content");
-
-            resultDiv.innerHTML = `<h3><i class="fas fa-exclamation-triangle"></i> Error</h3><p style="color: var(--error-color);">${message}</p>`;
-            pessimisticDiv.innerHTML = `<h3><i class="fas fa-frown"></i> ${isRussian ? translations.ru.pessimisticScenario : translations.en.pessimisticScenario}</h3><p>${isRussian ? translations.ru.resultsPlaceholder : translations.en.resultsPlaceholder}</p>`;
-            optimisticDiv.innerHTML = `<h3><i class="fas fa-smile"></i> ${isRussian ? translations.ru.optimisticScenario : translations.en.optimisticScenario}</h3><p>${isRussian ? translations.ru.resultsPlaceholder : translations.en.resultsPlaceholder}</p>`;
-            metricsGrid.innerHTML = `<div class="metric-card"><p style="color: var(--error-color);">${isRussian ? "Ошибка" : "Error"}</p></div>`;
-            mathDiv.innerHTML = `<p style="color: var(--error-color);">${isRussian ? "Ошибка в расчете" : "Error in calculation details"}</p>`;
-            analystRecDiv.innerHTML = `<p style="color: var(--error-color);">${isRussian ? "Ошибка загрузки рекомендаций" : "Error loading recommendations"}</p>`;
-        }
-
 
         async function calculate() {
-            const t = translations[isRussian ? 'ru' : 'en'];
-            const symbol = document.getElementById("symbol").value.toUpperCase();
-            let userGrowthRate;
-            let growthRatesPerYear = [];
+            const symbol = document.getElementById('symbol').value.toUpperCase();
+            const pe = parseFloat(document.getElementById('pe').value);
+            const discount = parseFloat(document.getElementById('discount').value);
 
+            let growthRates = [];
             if (isProGrowthMode) {
                 for (let i = 1; i <= years; i++) {
-                    const growthInput = document.getElementById(`growthYear${i}`);
-                    const rate = parseFloat(growthInput.value) / 100;
-                    if (isNaN(rate)) {
-                        showError(t.errorYearGrowthRate.replace('{year}', i));
+                    const growth = parseFloat(document.getElementById(`growthYear${i}`).value);
+                    if (isNaN(growth) || growth < 0 || growth > 100) {
+                        displayError(isRussian ? translations.ru.errorYearGrowthRate.replace('{year}', i) : translations.en.errorYearGrowthRate.replace('{year}', i));
                         return;
                     }
-                    growthRatesPerYear.push(rate);
+                    growthRates.push(growth / 100);
                 }
             } else {
-                userGrowthRate = parseFloat(document.getElementById("growth").value) / 100;
-                if (isNaN(userGrowthRate)) {
-                    showError(t.errorInvalidGrowthRate);
+                const growth = parseFloat(document.getElementById('growth').value);
+                if (isNaN(growth) || growth < 0 || growth > 100) {
+                    displayError(isRussian ? translations.ru.errorInvalidGrowthRate : translations.en.errorInvalidGrowthRate);
                     return;
                 }
+                for (let i = 0; i < years; i++) {
+                    growthRates.push(growth / 100);
+                }
             }
-
-            const expectedPE = parseFloat(document.getElementById("pe").value);
-            const discountRate = parseFloat(document.getElementById("discount").value) / 100;
 
             if (!symbol) {
-                showError(t.errorSymbolMissing);
-                return;
-            }
-            if (isNaN(expectedPE) || isNaN(discountRate)) {
-                showError(t.errorInvalidNumbers);
+                displayError(isRussian ? translations.ru.errorSymbolMissing : translations.en.errorSymbolMissing);
                 return;
             }
 
-            const resultDiv = document.getElementById("result");
-            const pessimisticDiv = document.getElementById("pessimistic");
-            const optimisticDiv = document.getElementById("optimistic");
-            const metricsGrid = document.getElementById("metrics-grid");
-            const mathDiv = document.getElementById("math");
-            const analystRecDiv = document.getElementById("analyst-recommendations-content");
+            if (isNaN(pe) || pe <= 0 || isNaN(discount) || discount <= 0) {
+                displayError(isRussian ? translations.ru.errorInvalidNumbers : translations.en.errorInvalidNumbers);
+                return;
+            }
 
-            resultDiv.innerHTML = `<h3><i class="fas fa-chart-line"></i> ${t.baseScenario}</h3><p><i class="fas fa-spinner fa-spin"></i> ${t.loadingData} ${symbol}...</p>`;
-            pessimisticDiv.innerHTML = `<h3><i class="fas fa-frown"></i> ${t.pessimisticScenario}</h3><p><i class="fas fa-spinner fa-spin"></i> ${t.calculating}</p>`;
-            optimisticDiv.innerHTML = `<h3><i class="fas fa-smile"></i> ${t.optimisticScenario}</h3><p><i class="fas fa-spinner fa-spin"></i> ${t.calculating}</p>`;
-            metricsGrid.innerHTML = `<div class="metric-card"><i class="fas fa-spinner fa-spin"></i> ${t.loadingMetrics}</div>`;
-            mathDiv.innerHTML = `<p><i class="fas fa-spinner fa-spin"></i> ${t.preparingDetails}</p>`;
-            analystRecDiv.innerHTML = `<p><i class="fas fa-spinner fa-spin"></i> ${t.loadingRecommendations}</p>`;
+            displayLoadingState();
 
             try {
-                const [profileRes, quoteRes, metricsRes, recommendationRes] = await Promise.all([
-                    fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${API_KEY}`),
-                    fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${API_KEY}`),
-                    fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${API_KEY}`),
-                    fetch(`https://finnhub.io/api/v1/stock/recommendation?symbol=${symbol}&token=${API_KEY}`)
-                ]);
+                // Fetch company data
+                const companyResponse = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${API_KEY}`);
+                const companyData = await companyResponse.json();
 
-                const profile = await profileRes.json();
-                const quote = await quoteRes.json();
-                const metrics = await metricsRes.json();
-                const recommendations = await recommendationRes.json();
+                if (Object.keys(companyData).length === 0) {
+                     displayError(isRussian ? translations.ru.errorInvalidSymbol : translations.en.errorInvalidSymbol);
+                     return;
+                }
 
-                if (!profile || !quote || !metrics || !quote.c || !metrics.metric || !metrics.metric["epsTTM"]) {
-                    showError(t.errorInvalidSymbol);
+                const currentPrice = companyData.shareOutstanding ? (companyData.marketCap * 1000000) / companyData.shareOutstanding : null;
+
+                // Fetch basic metrics
+                const metricResponse = await fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${API_KEY}`);
+                const metricData = await metricResponse.json();
+                const currentEPS = metricData.metric ? metricData.metric.epsTTM : null;
+                const currentPE = metricData.metric ? metricData.metric.peExclExtraTTM : null;
+                const forwardPE = metricData.metric ? metricData.metric.forwardPE : null;
+                const week52High = metricData.metric ? metricData.metric["52WeekHigh"] : null;
+                const week52Low = metricData.metric ? metricData.metric["52WeekLow"] : null;
+                const dividendYield = metricData.metric ? metricData.metric.dividendYieldIndicatedAnnual : null;
+
+                // Fetch analyst recommendations
+                const recommendationResponse = await fetch(`https://finnhub.io/api/v1/stock/recommendation?symbol=${symbol}&token=${API_KEY}`);
+                const recommendationData = await recommendationResponse.json();
+
+                if (currentEPS === null || currentPrice === null) {
+                    displayError(isRussian ? translations.ru.errorInvalidSymbol : translations.en.errorInvalidSymbol);
                     return;
                 }
 
-                const eps = metrics.metric["epsTTM"] || 0;
-                const price = quote.c || 0;
-                const currentPE = eps > 0 ? (price / eps).toFixed(2) : "N/A";
-                const forwardPE = metrics.metric["peExclExtraTTM"] || "N/A";
-                const dividendYield = (metrics.metric["dividendYieldIndicatedAnnual"] || 0).toFixed(2);
-                const marketCap = getMarketCapValue(metrics);
-                const week52High = quote.h || 0;
-                const week52Low = quote.l || 0;
+                // Display stock metrics
+                updateMetricsDisplay(symbol, currentPrice, companyData.marketCap, currentPE, forwardPE, week52High, week52Low, currentEPS, dividendYield, companyData.finnhubIndustry);
 
-                function calculateIntrinsic(eps, growthRates, peRatio, discountRate) {
-                    let intrinsicValue = 0;
-                    let futureEPSValues = [];
-                    let discountedFutureValues = [];
-                    let currentEPS = eps;
+                // Display analyst recommendations
+                updateAnalystRecommendations(recommendationData);
 
-                    for (let t = 0; t < years; t++) {
-                        const growthRate = Array.isArray(growthRates) ? growthRates[t] : growthRates;
-                        currentEPS = currentEPS * (1 + growthRate);
-                        const discounted = currentEPS / Math.pow(1 + discountRate, t + 1);
-                        intrinsicValue += discounted;
-                        futureEPSValues.push(currentEPS.toFixed(2));
-                        discountedFutureValues.push(discounted.toFixed(2));
-                    }
+                // --- Intrinsic Value Calculation ---
+                const discountRateDecimal = discount / 100;
+                let futureEarnings = [];
+                let discountedFutureEarnings = [];
+                let totalDiscountedFutureEarnings = 0;
 
-                    const terminalEPS = currentEPS; // EPS at the end of the projection period
-                    const terminalValue = terminalEPS * peRatio;
-                    const discountedTerminal = terminalValue / Math.pow(1 + discountRate, years);
-                    intrinsicValue += discountedTerminal;
-
-                    return { 
-                        intrinsicValue, 
-                        futureEPSValues, 
-                        discountedFutureValues, 
-                        terminalEPS: terminalEPS.toFixed(2), 
-                        terminalValue: terminalValue.toFixed(2), 
-                        discountedTerminal: discountedTerminal.toFixed(2) 
-                    };
+                let mathDetails = `<p><strong>${isRussian ? translations.ru.valuationFormula : translations.en.valuationFormula}</strong></p>`;
+                mathDetails += `<p><strong>${isRussian ? translations.ru.step1 : translations.en.step1}</strong></p>`;
+                for (let i = 0; i < years; i++) {
+                    const currentYearEPS = i === 0 ? currentEPS : futureEarnings[i-1];
+                    const futureEPS = currentYearEPS * (1 + growthRates[i]);
+                    futureEarnings.push(futureEPS);
+                    mathDetails += `Year ${i + 1} EPS: ${formatCurrency(currentYearEPS)} × (1 + ${formatPercentage(growthRates[i])}) = ${formatCurrency(futureEPS)}<br>`;
                 }
 
-                const baseGrowthRates = isProGrowthMode ? growthRatesPerYear : userGrowthRate;
-                const pessimisticGrowthRates = isProGrowthMode ? growthRatesPerYear.map(r => Math.max(0, r - 0.02)) : Math.max(0, userGrowthRate - 0.02);
-                const optimisticGrowthRates = isProGrowthMode ? growthRatesPerYear.map(r => r + 0.02) : userGrowthRate + 0.02;
+                mathDetails += `<p><strong>${isRussian ? translations.ru.step2 : translations.en.step2}</strong></p>`;
+                for (let i = 0; i < years; i++) {
+                    const discountedEPS = futureEarnings[i] / Math.pow(1 + discountRateDecimal, i + 1);
+                    discountedFutureEarnings.push(discountedEPS);
+                    totalDiscountedFutureEarnings += discountedEPS;
+                    mathDetails += `Year ${i + 1} Discounted Earnings: ${formatCurrency(futureEarnings[i])} / (1 + ${formatPercentage(discountRateDecimal)})^${i + 1} = ${formatCurrency(discountedEPS)}<br>`;
+                }
 
-                const base = calculateIntrinsic(eps, baseGrowthRates, expectedPE, discountRate);
-                const pessimistic = calculateIntrinsic(eps, pessimisticGrowthRates, Math.max(1, expectedPE - 2), discountRate);
-                const optimistic = calculateIntrinsic(eps, optimisticGrowthRates, expectedPE + 2, discountRate);
+                const terminalEPS = futureEarnings[years - 1];
+                const terminalValue = terminalEPS * pe;
+                const discountedTerminalValue = terminalValue / Math.pow(1 + discountRateDecimal, years);
 
-                const baseUpside = price > 0 ? ((base.intrinsicValue - price) / price * 100).toFixed(2) : "N/A";
-                const pessimisticUpside = price > 0 ? ((pessimistic.intrinsicValue - price) / price * 100).toFixed(2) : "N/A";
-                const optimisticUpside = price > 0 ? ((optimistic.intrinsicValue - price) / price * 100).toFixed(2) : "N/A";
+                mathDetails += `<p><strong>${isRussian ? translations.ru.step3 : translations.en.step3}</strong></p>`;
+                mathDetails += `Terminal EPS: ${formatCurrency(terminalEPS)}<br>`;
+                mathDetails += `Future P/E: ${pe}<br>`;
+                mathDetails += `Terminal Value: ${formatCurrency(terminalEPS)} × ${pe} = ${formatCurrency(terminalValue)}<br>`;
 
-                resultDiv.innerHTML = `
-                    <h3><i class="fas fa-chart-line"></i> ${profile.name || symbol} - ${t.baseScenario}</h3>
-                    <p>${t.expectedPEText}: <strong>${expectedPE}</strong></p>
-                    <p>${t.growthRateText}: <strong>${isProGrowthMode ? t.perYearText : (userGrowthRate * 100).toFixed(2) + '%'}</strong></p>
-                    <p>${t.discountRateText}: <strong>${(discountRate * 100).toFixed(2)}%</strong></p>
-                    <div class="value-highlight ${baseUpside >= 0 ? 'positive' : 'negative'}">
-                        <strong>$${base.intrinsicValue.toFixed(2)}</strong><br>
-                        ${baseUpside >= 0 ? t.upside : t.downside}: ${Math.abs(baseUpside)}%
-                    </div>
-                    <p style="font-size: 0.9rem; color: var(--text-light);">
-                        ${t.currentPriceText}: $${price.toFixed(2)}
-                    </p>
+                mathDetails += `<p><strong>${isRussian ? translations.ru.step4 : translations.en.step4}</strong></p>`;
+                mathDetails += `Discounted Terminal Value: ${formatCurrency(terminalValue)} / (1 + ${formatPercentage(discountRateDecimal)})^${years} = ${formatCurrency(discountedTerminalValue)}<br>`;
+
+
+                const intrinsicValue = totalDiscountedFutureEarnings + discountedTerminalValue;
+
+                mathDetails += `<p><strong>${isRussian ? translations.ru.step5 : translations.en.step5}</strong></p>`;
+                mathDetails += `Intrinsic Value: ${formatCurrency(totalDiscountedFutureEarnings)} (Sum of Discounted Future Earnings) + ${formatCurrency(discountedTerminalValue)} (Discounted Terminal Value) = <strong>${formatCurrency(intrinsicValue)}</strong>`;
+
+
+                // Pessimistic Scenario (e.g., -2% growth, -5 P/E, +2% discount rate)
+                let pessimisticGrowthRates = growthRates.map(g => Math.max(0, g - 0.02)); // Ensure non-negative growth
+                let pessimisticPE = Math.max(1, pe - 5);
+                let pessimisticDiscount = discountRateDecimal + 0.02;
+
+                let pessimisticIntrinsicValue = calculateScenario(currentEPS, pessimisticGrowthRates, pessimisticPE, pessimisticDiscount, years);
+
+                // Optimistic Scenario (e.g., +2% growth, +5 P/E, -2% discount rate)
+                let optimisticGrowthRates = growthRates.map(g => g + 0.02);
+                let optimisticPE = pe + 5;
+                let optimisticDiscount = Math.max(0.01, discountRateDecimal - 0.02); // Ensure positive discount rate
+
+                let optimisticIntrinsicValue = calculateScenario(currentEPS, optimisticGrowthRates, optimisticPE, optimisticDiscount, years);
+
+                // Display Results
+                const t = translations[isRussian ? 'ru' : 'en'];
+                document.getElementById('result').innerHTML = `
+                    <h3><i class="fas fa-chart-line"></i> ${t.baseScenario}</h3>
+                    <p>${t.currentPriceText}: <strong>${formatCurrency(currentPrice)}</strong></p>
+                    <p>${t.expectedPEText}: <strong>${pe}</strong></p>
+                    <p>${t.growthRateText}: <strong>${formatPercentage(growthRates[0])}${isProGrowthMode ? ` (${t.perYearText})` : ''}</strong></p>
+                    <p>${t.discountRateText}: <strong>${formatPercentage(discountRateDecimal)}</strong></p>
+                    <hr>
+                    <p><strong>${t.futurePE}: ${pe}</strong></p>
+                    <p><strong>${t.intrinsicValue}: <span class="value-highlight">${formatCurrency(intrinsicValue)}</span></strong></p>
+                    <p>${t.upside}: ${formatPercentage((intrinsicValue - currentPrice) / currentPrice)}</p>
                 `;
 
-                pessimisticDiv.innerHTML = `
+                document.getElementById('pessimistic').innerHTML = `
                     <h3><i class="fas fa-frown"></i> ${t.pessimisticScenario}</h3>
-                    <p>${t.growthRateText}: <strong>${isProGrowthMode ? `${t.perYearText} ${t.adjusted}` : ((userGrowthRate - 0.02) * 100).toFixed(2) + '%'}</strong></p>
-                    <p>${t.futurePE}: <strong>${Math.max(1, expectedPE - 2)}</strong></p>
-                    <div class="value-highlight ${pessimisticUpside >= 0 ? 'positive' : 'negative'}" style="font-size: 1.2rem;">
-                        <strong>$${pessimistic.intrinsicValue.toFixed(2)}</strong><br>
-                        ${pessimisticUpside >= 0 ? t.upside : t.downside}: ${Math.abs(pessimisticUpside)}%
-                    </div>
+                    <p>${t.currentPriceText}: <strong>${formatCurrency(currentPrice)}</strong></p>
+                    <p>${t.expectedPEText}: <strong>${pessimisticPE}</strong></p>
+                    <p>${t.growthRateText}: <strong>${formatPercentage(pessimisticGrowthRates[0])}${isProGrowthMode ? ` (${t.perYearText})` : ''}</strong></p>
+                    <p>${t.discountRateText}: <strong>${formatPercentage(pessimisticDiscount)}</strong></p>
+                    <hr>
+                    <p><strong>${t.futurePE}: ${pessimisticPE}</strong></p>
+                    <p><strong>${t.intrinsicValue}: <span class="value-highlight negative">${formatCurrency(pessimisticIntrinsicValue)}</span></strong></p>
+                    <p>${t.downside}: ${formatPercentage((pessimisticIntrinsicValue - currentPrice) / currentPrice)}</p>
                 `;
 
-                optimisticDiv.innerHTML = `
+                document.getElementById('optimistic').innerHTML = `
                     <h3><i class="fas fa-smile"></i> ${t.optimisticScenario}</h3>
-                    <p>${t.growthRateText}: <strong>${isProGrowthMode ? `${t.perYearText} ${t.adjusted}` : ((userGrowthRate + 0.02) * 100).toFixed(2) + '%'}</strong></p>
-                    <p>${t.futurePE}: <strong>${expectedPE + 2}</strong></p>
-                    <div class="value-highlight ${optimisticUpside >= 0 ? 'positive' : 'negative'}" style="font-size: 1.2rem;">
-                        <strong>$${optimistic.intrinsicValue.toFixed(2)}</strong><br>
-                        ${optimisticUpside >= 0 ? t.upside : t.downside}: ${Math.abs(optimisticUpside)}%
-                    </div>
+                    <p>${t.currentPriceText}: <strong>${formatCurrency(currentPrice)}</strong></p>
+                    <p>${t.expectedPEText}: <strong>${optimisticPE}</strong></p>
+                    <p>${t.growthRateText}: <strong>${formatPercentage(optimisticGrowthRates[0])}${isProGrowthMode ? ` (${t.perYearText})` : ''}</strong></p>
+                    <p>${t.discountRateText}: <strong>${formatPercentage(optimisticDiscount)}</strong></p>
+                    <hr>
+                    <p><strong>${t.futurePE}: ${optimisticPE}</strong></p>
+                    <p><strong>${t.intrinsicValue}: <span class="value-highlight positive">${formatCurrency(optimisticIntrinsicValue)}</span></strong></p>
+                    <p>${t.upside}: ${formatPercentage((optimisticIntrinsicValue - currentPrice) / currentPrice)}</p>
                 `;
 
-                const marketCapFormatted = formatMarketCap(marketCap);
-                metricsGrid.innerHTML = `
-                    <div class="metric-card">
-                        <h4>${t.currentPrice}</h4>
-                        <p>$${price.toFixed(2)}</p>
-                    </div>
-                    <div class="metric-card">
-                        <h4>${t.marketCap}</h4>
-                        <p>${marketCapFormatted}</p>
-                    </div>
-                    <div class="metric-card">
-                        <h4>${t.peRatio}</h4>
-                        <p>${currentPE}</p>
-                    </div>
-                    <div class="metric-card">
-                        <h4>${t.forwardPE}</h4>
-                        <p>${forwardPE}</p>
-                    </div>
-                    <div class="metric-card">
-                        <h4>${t.week52Range}</h4>
-                        <p>$${week52Low.toFixed(2)} - $${week52High.toFixed(2)}</p>
-                    </div>
-                    <div class="metric-card">
-                        <h4>${t.epsTTM}</h4>
-                        <p>$${eps.toFixed(2)}</p>
-                    </div>
-                    <div class="metric-card">
-                        <h4>${t.dividendYield}</h4>
-                        <p>${dividendYield}%</p>
-                    </div>
-                    <div class="metric-card">
-                        <h4>${t.industry}</h4>
-                        <p>${profile.finnhubIndustry || 'N/A'}</p>
-                    </div>
-                `;
-
-                let mathContent = `${t.valuationFormula}
-
-${t.eps}: $${eps.toFixed(2)} | ${t.growth}: ${isProGrowthMode ? `${t.perYearText}: [` + growthRatesPerYear.map(r => (r * 100).toFixed(2) + '%').join(', ') + ']' : (userGrowthRate * 100).toFixed(2) + '%'} | ${t.discount}: ${(discountRate * 100).toFixed(2)}% | ${t.futurePEshort}: ${expectedPE} | ${t.years}: ${years}
-
-${t.step1}
-`;
-                for (let i = 0; i < years; i++) {
-                    mathContent += `Y${i+1}: $${base.futureEPSValues[i]}\n`;
-                }
-
-                mathContent += `\n${t.step2}
-`;
-                for (let i = 0; i < years; i++) {
-                    mathContent += `Y${i+1}: $${base.discountedFutureValues[i]}\n`;
-                }
-
-                mathContent += `\n${t.step3}
-Terminal EPS: $${base.terminalEPS}
-Terminal Value = Terminal EPS × Future P/E = $${base.terminalEPS} × ${expectedPE} = $${base.terminalValue}
-
-${t.step4}
-Discounted Terminal Value = Terminal Value / (1 + Discount Rate)^Years = $${base.terminalValue} / (1 + ${discountRate.toFixed(2)})^${years} = $${base.discountedTerminal}
-
-${t.step5}
-Intrinsic Value = ${base.discountedFutureValues.join(' + ')} + $${base.discountedTerminal} = $${base.intrinsicValue.toFixed(2)}
-`;
-                mathDiv.innerHTML = `<pre>${mathContent}</pre>`;
-
-
-                if (recommendations && recommendations.length > 0) {
-                    const latestRec = recommendations[0];
-                    let recDisplay = `<div class="analyst-recommendations-grid">`;
-                    recDisplay += `<span><strong>${t.buy}:</strong> ${latestRec.buy}</span>`;
-                    recDisplay += `<span><strong>${t.hold}:</strong> ${latestRec.hold}</span>`;
-                    recDisplay += `<span><strong>${t.sell}:</strong> ${latestRec.sell}</span>`;
-                    recDisplay += `<span><strong>${t.strongBuy}:</strong> ${latestRec.strongBuy}</span>`;
-                    recDisplay += `<span><strong>${t.strongSell}:</strong> ${latestRec.strongSell}</span>`;
-                    recDisplay += `</div>`;
-                    analystRecDiv.innerHTML = recDisplay;
-                } else {
-                    analystRecDiv.innerHTML = `<p>${t.recommendationsPlaceholder}</p>`;
-                }
+                document.getElementById('math').innerHTML = mathDetails;
 
             } catch (error) {
-                console.error("Error calculating intrinsic value:", error);
-                showError(`${t.errorInvalidSymbol} (${error.message})`);
+                console.error("Calculation Error:", error);
+                displayError(isRussian ? translations.ru.errorInvalidSymbol : translations.en.errorInvalidSymbol);
             }
+        }
+
+        function calculateScenario(currentEPS, growthRates, pe, discountRateDecimal, years) {
+            let futureEarnings = [];
+            let discountedFutureEarnings = 0;
+
+            for (let i = 0; i < years; i++) {
+                const currentYearEPS = i === 0 ? currentEPS : futureEarnings[i-1];
+                const futureEPS = currentYearEPS * (1 + growthRates[i]);
+                futureEarnings.push(futureEPS);
+                discountedFutureEarnings += futureEPS / Math.pow(1 + discountRateDecimal, i + 1);
+            }
+
+            const terminalEPS = futureEarnings[years - 1];
+            const terminalValue = terminalEPS * pe;
+            const discountedTerminalValue = terminalValue / Math.pow(1 + discountRateDecimal, years);
+
+            return discountedFutureEarnings + discountedTerminalValue;
         }
 
         function resetFields() {
-            document.getElementById("symbol").value = "";
-            document.getElementById("growth").value = "";
-            document.getElementById("pe").value = "";
-            document.getElementById("discount").value = "";
+            document.getElementById('symbol').value = '';
+            document.getElementById('growth').value = '';
             for (let i = 1; i <= years; i++) {
-                document.getElementById(`growthYear${i}`).value = "";
+                document.getElementById(`growthYear${i}`).value = '';
             }
+            document.getElementById('pe').value = '';
+            document.getElementById('discount').value = '';
 
             const t = translations[isRussian ? 'ru' : 'en'];
-            document.getElementById("result").innerHTML = `<h3><i class="fas fa-chart-line"></i> ${t.baseScenario}</h3><p>${t.enterValuesPlaceholder}</p>`;
-            document.getElementById("pessimistic").innerHTML = `<h3><i class="fas fa-frown"></i> ${t.pessimisticScenario}</h3><p>${t.resultsPlaceholder}</p>`;
-            document.getElementById("optimistic").innerHTML = `<h3><i class="fas fa-smile"></i> ${t.optimisticScenario}</h3><p>${t.resultsPlaceholder}</p>`;
-            document.getElementById("metrics-grid").innerHTML = `<p>${t.metricsPlaceholder}</p>`;
-            document.getElementById("math").innerHTML = `<p>${t.preparingDetails.replace('...', '.')}</p>`; // Simpler phrasing for reset
-            document.getElementById("analyst-recommendations-content").innerHTML = `<p>${t.recommendationsPlaceholder}</p>`;
+            document.getElementById('metrics-grid').innerHTML = '';
+            document.getElementById('extra p').textContent = t.metricsPlaceholder;
+            document.getElementById('pessimistic').innerHTML = `<h3><i class="fas fa-frown"></i> ${t.pessimisticScenario}</h3><p>${t.resultsPlaceholder}</p>`;
+            document.getElementById('result').innerHTML = `<h3><i class="fas fa-chart-line"></i> ${t.baseScenario}</h3><p>${t.enterValuesPlaceholder}</p>`;
+            document.getElementById('optimistic').innerHTML = `<h3><i class="fas fa-smile"></i> ${t.optimisticScenario}</h3><p>${t.resultsPlaceholder}</p>`;
+            document.getElementById('analyst-recommendations-content').innerHTML = `<p>${t.recommendationsPlaceholder}</p>`;
+            document.getElementById('math').innerHTML = `<p>${t.preparingDetails}</p>`;
         }
+
+        function displayLoadingState() {
+            const symbol = document.getElementById('symbol').value.toUpperCase();
+            const t = translations[isRussian ? 'ru' : 'en'];
+
+            document.getElementById('extra p').textContent = `${t.loadingMetrics}...`;
+            document.getElementById('metrics-grid').innerHTML = '';
+            document.getElementById('analyst-recommendations-content').innerHTML = `<p>${t.loadingMetrics}...</p>`;
+
+            document.getElementById('result').innerHTML = `<h3><i class="fas fa-chart-line"></i> ${t.baseScenario}</h3><p>${t.calculating}...</p>`;
+            document.getElementById('pessimistic').innerHTML = `<h3><i class="fas fa-frown"></i> ${t.pessimisticScenario}</h3><p>${t.calculating}...</p>`;
+            document.getElementById('optimistic').innerHTML = `<h3><i class="fas fa-smile"></i> ${t.optimisticScenario}</h3><p>${t.calculating}...</p>`;
+            document.getElementById('math').innerHTML = `<p>${t.preparingDetails}</p>`;
+        }
+
+        function displayError(message) {
+            const t = translations[isRussian ? 'ru' : 'en'];
+            document.getElementById('result').innerHTML = `<h3><i class="fas fa-exclamation-triangle"></i> Error</h3><p style="color: var(--error-color);">${message}</p>`;
+            document.getElementById('pessimistic').innerHTML = `<h3><i class="fas fa-frown"></i> ${t.pessimisticScenario}</h3><p style="color: var(--error-color);">${message}</p>`;
+            document.getElementById('optimistic').innerHTML = `<h3><i class="fas fa-smile"></i> ${t.optimisticScenario}</h3><p style="color: var(--error-color);">${message}</p>`;
+            document.getElementById('analyst-recommendations-content').innerHTML = `<p style="color: var(--error-color);">${message}</p>`;
+            document.getElementById('metrics-grid').innerHTML = '';
+            document.getElementById('extra p').textContent = t.metricsPlaceholder; // Reset placeholder
+            document.getElementById('math').innerHTML = `<p>${t.preparingDetails}</p>`;
+        }
+
+
+        function updateMetricsDisplay(symbol, currentPrice, marketCap, peRatio, forwardPE, week52High, week52Low, epsTTM, dividendYield, industry) {
+            const metricsGrid = document.getElementById('metrics-grid');
+            metricsGrid.innerHTML = ''; // Clear previous metrics
+            const t = translations[isRussian ? 'ru' : 'en'];
+
+            document.getElementById('extra p').textContent = ''; // Clear initial placeholder text
+
+            const addMetric = (title, value) => {
+                metricsGrid.innerHTML += `
+                    <div class="metric-card">
+                        <h4>${title}</h4>
+                        <p>${value}</p>
+                    </div>
+                `;
+            };
+
+            if (currentPrice !== null) addMetric(t.currentPrice, formatCurrency(currentPrice));
+            if (marketCap !== null) addMetric(t.marketCap, formatMillions(marketCap));
+            if (peRatio !== null) addMetric(t.peRatio, formatNumber(peRatio));
+            if (forwardPE !== null) addMetric(t.forwardPE, formatNumber(forwardPE));
+            if (week52High !== null && week52Low !== null) addMetric(t.week52Range, `${formatCurrency(week52Low)} - ${formatCurrency(week52High)}`);
+            if (epsTTM !== null) addMetric(t.epsTTM, formatCurrency(epsTTM));
+            if (dividendYield !== null) addMetric(t.dividendYield, formatPercentage(dividendYield / 100)); // Assuming dividendYield is a percentage like 1.5 for 1.5%
+            if (industry) addMetric(t.industry, industry);
+        }
+
+        function updateAnalystRecommendations(data) {
+            const recommendationsDiv = document.getElementById('analyst-recommendations-content');
+            recommendationsDiv.innerHTML = '';
+            const t = translations[isRussian ? 'ru' : 'en'];
+
+            if (!data || data.length === 0) {
+                recommendationsDiv.innerHTML = `<p>${t.recommendationsPlaceholder}</p>`;
+                return;
+            }
+
+            const latestRecommendation = data[0]; // Assuming the latest is the first one
+            const buy = latestRecommendation.buy || 0;
+            const hold = latestRecommendation.hold || 0;
+            const sell = latestRecommendation.sell || 0;
+            const strongBuy = latestRecommendation.strongBuy || 0;
+            const strongSell = latestRecommendation.strongSell || 0;
+
+            const total = buy + hold + sell + strongBuy + strongSell;
+
+            if (total === 0) {
+                recommendationsDiv.innerHTML = `<p>${t.recommendationsPlaceholder}</p>`;
+                return;
+            }
+
+            const getRecommendationText = (value) => {
+                switch (value) {
+                    case "strongBuy": return t.strongBuy;
+                    case "buy": return t.buy;
+                    case "hold": return t.hold;
+                    case "sell": return t.sell;
+                    case "strongSell": return t.strongSell;
+                    default: return "";
+                }
+            };
+
+            // Determine the highest recommendation category
+            const categories = [
+                { name: "strongBuy", count: strongBuy },
+                { name: "buy", count: buy },
+                { name: "hold", count: hold },
+                { name: "sell", count: sell },
+                { name: "strongSell", count: strongSell }
+            ];
+
+            // Sort by count descending to find the most frequent recommendation
+            categories.sort((a, b) => b.count - a.count);
+
+            let overallRecommendation = t.hold; // Default to hold if no strong majority
+            if (categories[0].count > 0) {
+                overallRecommendation = getRecommendationText(categories[0].name);
+            }
+
+            recommendationsDiv.innerHTML = `
+                <div style="font-size: 1.6rem; font-weight: 700; color: var(--secondary-color); margin-bottom: 15px;">
+                    ${overallRecommendation}
+                </div>
+                <div class="analyst-recommendations-grid">
+                    <span><strong>${t.strongBuy}:</strong> ${strongBuy}</span>
+                    <span><strong>${t.buy}:</strong> ${buy}</span>
+                    <span><strong>${t.hold}:</strong> ${hold}</span>
+                    <span><strong>${t.sell}:</strong> ${sell}</span>
+                    <span><strong>${t.strongSell}:</strong> ${strongSell}</span>
+                </div>
+            `;
+        }
+
+
+        // Helper functions for formatting
+        function formatCurrency(value) {
+            if (value === null || isNaN(value)) return 'N/A';
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+        }
+
+        function formatPercentage(value) {
+            if (value === null || isNaN(value)) return 'N/A';
+            return new Intl.NumberFormat('en-US', { style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 2 }).format(value);
+        }
+
+        function formatNumber(value) {
+            if (value === null || isNaN(value)) return 'N/A';
+            return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(value);
+        }
+
+        function formatMillions(value) {
+            if (value === null || isNaN(value)) return 'N/A';
+            return new Intl.NumberFormat('en-US', {
+                notation: 'compact',
+                compactDisplay: 'short',
+                maximumFractionDigits: 2
+            }).format(value);
+        }
+
+        // Initial translation on load
+        translatePage();
     </script>
 </body>
 </html>
