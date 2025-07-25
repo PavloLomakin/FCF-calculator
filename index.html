@@ -1,3 +1,6 @@
+Here's the updated HTML code with the "Русский" button and the "Checklist" button, including the necessary styling and basic JavaScript for the "Checklist" button.
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -82,10 +85,15 @@
             font-size: 1rem;
         }
 
-        .pro-button-header {
+        .header-buttons {
+            display: flex;
+            gap: 10px;
             position: absolute;
             top: 15px;
             right: 15px;
+        }
+
+        .header-button {
             padding: 4px 8px;
             font-size: 0.7rem;
             background-color: var(--dark-grey);
@@ -95,12 +103,11 @@
             cursor: pointer;
             font-weight: 600;
             transition: var(--transition);
-            width: 40px; /* Fixed width to make it narrow */
             text-align: center;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        .pro-button-header:hover {
+        .header-button:hover {
             background-color: var(--dark-grey-hover);
             transform: translateY(-1px);
             box-shadow: 0 3px 6px rgba(0,0,0,0.15);
@@ -420,7 +427,11 @@
                 <h1><i class="fas fa-calculator"></i> Intrinsic Value Calculator</h1>
                 <p>Calculate the fair value of stocks based on fundamental analysis</p>
             </div>
-            <button id="toggleGrowthMode" onclick="toggleGrowthInputMode()" class="pro-button-header">Pro</button>
+            <div class="header-buttons">
+                <button id="toggleGrowthMode" onclick="toggleGrowthInputMode()" class="header-button">Pro</button>
+                <button id="russianButton" class="header-button">Русский</button>
+                <button id="checklistButton" class="header-button">Checklist</button>
+            </div>
         </div>
 
         <div class="content">
@@ -543,6 +554,219 @@
         const API_KEY = "d0kuab9r01qhb02558rgd0kuab9r01qhb02558s0";
         const years = 5;
         let isProGrowthMode = false;
+        let isRussian = false; // New state variable for language
+
+        // Translations object
+        const translations = {
+            en: {
+                calculatorTitle: "Intrinsic Value Calculator",
+                calculatorSubtitle: "Calculate the fair value of stocks based on fundamental analysis",
+                proButton: "Pro",
+                basicButton: "Basic",
+                stockSymbol: "Stock Symbol",
+                stockSymbolTooltip: "Enter the stock ticker symbol (e.g., AAPL for Apple)",
+                estimatedGrowth: "Estimated Annual Growth Rate (%)",
+                estimatedGrowthTooltip: "Your estimate of the company's annual earnings growth rate",
+                year1Growth: "Year 1 Growth (%)",
+                year2Growth: "Year 2 Growth (%)",
+                year3Growth: "Year 3 Growth (%)",
+                year4Growth: "Year 4 Growth (%)",
+                year5Growth: "Year 5 Growth (%)",
+                expectedPE: "Expected Future P/E Ratio",
+                expectedPETooltip: "Price-to-Earnings ratio you expect in the future",
+                discountRate: "Discount Rate (%)",
+                discountRateTooltip: "Your required rate of return (opportunity cost)",
+                calculateButton: "Calculate Intrinsic Value",
+                resetButton: "Reset",
+                stockMetrics: "Stock Metrics",
+                metricsPlaceholder: "Enter a stock symbol and click \"Calculate\" to view metrics.",
+                currentPrice: "Current Price",
+                marketCap: "Market Cap, M",
+                peRatio: "P/E Ratio",
+                forwardPE: "Forward P/E",
+                week52Range: "52-Week Range",
+                epsTTM: "EPS (TTM)",
+                dividendYield: "Dividend Yield",
+                industry: "Industry",
+                pessimisticScenario: "Pessimistic Scenario",
+                baseScenario: "Base Scenario",
+                optimisticScenario: "Optimistic Scenario",
+                resultsPlaceholder: "Results will appear here after calculation",
+                enterValuesPlaceholder: "Enter values and click \"Calculate\" to see results",
+                loadingData: "Loading data for",
+                calculating: "Calculating...",
+                loadingMetrics: "Loading metrics...",
+                analystRecommendations: "Analyst Recommendations",
+                recommendationsPlaceholder: "Enter a stock symbol and click \"Calculate\" to view analyst recommendations.",
+                preparingDetails: "Preparing calculation details...",
+                expectedPEText: "Expected P/E",
+                growthRateText: "Growth Rate",
+                perYearText: "Per Year",
+                discountRateText: "Discount Rate",
+                upside: "Upside",
+                downside: "Downside",
+                currentPriceText: "Current Price",
+                adjusted: "(Adjusted)",
+                futurePE: "Future P/E",
+                valuationFormula: "Valuation Formula (for Base Scenario):",
+                eps: "EPS",
+                growth: "Growth",
+                discount: "Discount",
+                futurePEshort: "Future P/E",
+                years: "Years",
+                step1: "Step 1: Future EPS (EPS × (1+G)^t):",
+                step2: "Step 2: Discounted Future Earnings (Future EPS / (1+Discount Rate)^t):",
+                step3: "Step 3: Terminal Value (Terminal EPS × Future P/E):",
+                step4: "Step 4: Discounted Terminal Value (Terminal Value / (1+Discount Rate)^Years):",
+                step5: "Step 5: Intrinsic Value (Sum of Discounted Future Earnings + Discounted Terminal Value):",
+                buy: "Buy",
+                hold: "Hold",
+                sell: "Sell",
+                strongBuy: "Strong Buy",
+                strongSell: "Strong Sell",
+                errorInvalidSymbol: "Could not fetch complete data for this symbol. Please ensure the symbol is correct and try again.",
+                errorInvalidGrowthRate: "Please enter a valid number for Estimated Annual Growth Rate.",
+                errorYearGrowthRate: "Please enter a valid number for Year {year} Growth Rate.",
+                errorSymbolMissing: "Please enter a stock symbol",
+                errorInvalidNumbers: "Please enter valid numbers for all fields",
+            },
+            ru: {
+                calculatorTitle: "Калькулятор Внутренней Стоимости",
+                calculatorSubtitle: "Расчет справедливой стоимости акций на основе фундаментального анализа",
+                proButton: "Про",
+                basicButton: "Базовый",
+                stockSymbol: "Тикер Акции",
+                stockSymbolTooltip: "Введите тикер акции (например, AAPL для Apple)",
+                estimatedGrowth: "Ожидаемый Годовой Темп Роста (%)",
+                estimatedGrowthTooltip: "Ваша оценка годового темпа роста прибыли компании",
+                year1Growth: "Рост за 1 год (%)",
+                year2Growth: "Рост за 2 год (%)",
+                year3Growth: "Рост за 3 год (%)",
+                year4Growth: "Рост за 4 год (%)",
+                year5Growth: "Рост за 5 год (%)",
+                expectedPE: "Ожидаемый Будущий P/E Коэффициент",
+                expectedPETooltip: "Отношение цены к прибыли, которое вы ожидаете в будущем",
+                discountRate: "Ставка Дисконтирования (%)",
+                discountRateTooltip: "Ваша требуемая норма доходности (альтернативная стоимость)",
+                calculateButton: "Рассчитать Внутреннюю Стоимость",
+                resetButton: "Сбросить",
+                stockMetrics: "Показатели Акции",
+                metricsPlaceholder: "Введите тикер акции и нажмите \"Рассчитать\", чтобы увидеть показатели.",
+                currentPrice: "Текущая Цена",
+                marketCap: "Рыночная Капитализация, М",
+                peRatio: "P/E Коэффициент",
+                forwardPE: "Прогнозный P/E",
+                week52Range: "Диапазон за 52 недели",
+                epsTTM: "EPS (TTM)",
+                dividendYield: "Дивидендная Доходность",
+                industry: "Отрасль",
+                pessimisticScenario: "Пессимистичный Сценарий",
+                baseScenario: "Базовый Сценарий",
+                optimisticScenario: "Оптимистичный Сценарий",
+                resultsPlaceholder: "Результаты появятся здесь после расчета",
+                enterValuesPlaceholder: "Введите значения и нажмите \"Рассчитать\", чтобы увидеть результаты",
+                loadingData: "Загрузка данных для",
+                calculating: "Расчет...",
+                loadingMetrics: "Загрузка показателей...",
+                analystRecommendations: "Рекомендации Аналитиков",
+                recommendationsPlaceholder: "Введите тикер акции и нажмите \"Рассчитать\", чтобы увидеть рекомендации аналитиков.",
+                preparingDetails: "Подготовка деталей расчета...",
+                expectedPEText: "Ожидаемый P/E",
+                growthRateText: "Темп Роста",
+                perYearText: "По годам",
+                discountRateText: "Ставка Дисконтирования",
+                upside: "Потенциал роста",
+                downside: "Потенциал падения",
+                currentPriceText: "Текущая Цена",
+                adjusted: "(Скорректировано)",
+                futurePE: "Будущий P/E",
+                valuationFormula: "Формула Оценки (для Базового Сценария):",
+                eps: "EPS",
+                growth: "Рост",
+                discount: "Дисконт",
+                futurePEshort: "Будущий P/E",
+                years: "Лет",
+                step1: "Шаг 1: Будущая EPS (EPS × (1+G)^t):",
+                step2: "Шаг 2: Дисконтированная Будущая Прибыль (Будущая EPS / (1+Ставка Дисконтирования)^t):",
+                step3: "Шаг 3: Терминальная Стоимость (Терминальная EPS × Будущий P/E):",
+                step4: "Шаг 4: Дисконтированная Терминальная Стоимость (Терминальная Стоимость / (1+Ставка Дисконтирования)^Лет):",
+                step5: "Шаг 5: Внутренняя Стоимость (Сумма Дисконтированной Будущей Прибыли + Дисконтированная Терминальная Стоимость):",
+                buy: "Покупать",
+                hold: "Держать",
+                sell: "Продавать",
+                strongBuy: "Активно Покупать",
+                strongSell: "Активно Продавать",
+                errorInvalidSymbol: "Не удалось получить полные данные для этого символа. Убедитесь, что символ введен правильно, и попробуйте снова.",
+                errorInvalidGrowthRate: "Пожалуйста, введите действительное число для ожидаемого годового темпа роста.",
+                errorYearGrowthRate: "Пожалуйста, введите действительное число для роста за {year} год.",
+                errorSymbolMissing: "Пожалуйста, введите тикер акции",
+                errorInvalidNumbers: "Пожалуйста, введите действительные числа для всех полей",
+            }
+        };
+
+        function translatePage() {
+            const lang = isRussian ? 'ru' : 'en';
+            const t = translations[lang];
+
+            // Header
+            document.querySelector('.header h1').innerHTML = `<i class="fas fa-calculator"></i> ${t.calculatorTitle}`;
+            document.querySelector('.header p').textContent = t.calculatorSubtitle;
+            document.getElementById('toggleGrowthMode').textContent = isProGrowthMode ? t.basicButton : t.proButton;
+            document.getElementById('russianButton').textContent = isRussian ? 'English' : 'Русский';
+
+            // Input Column
+            document.querySelector('label[for="symbol"]').innerHTML = `${t.stockSymbol} <span class="tooltip"><i class="fas fa-info-circle"></i><span class="tooltiptext">${t.stockSymbolTooltip}</span></span>`;
+            document.querySelector('label[for="growth"]').innerHTML = `${t.estimatedGrowth} <span class="tooltip"><i class="fas fa-info-circle"></i><span class="tooltiptext">${t.estimatedGrowthTooltip}</span></span>`;
+            for (let i = 1; i <= years; i++) {
+                document.querySelector(`label[for="growthYear${i}"]`).textContent = t[`year${i}Growth`];
+            }
+            document.querySelector('label[for="pe"]').innerHTML = `${t.expectedPE} <span class="tooltip"><i class="fas fa-info-circle"></i><span class="tooltiptext">${t.expectedPETooltip}</span></span>`;
+            document.querySelector('label[for="discount"]').innerHTML = `${t.discountRate} <span class="tooltip"><i class="fas fa-info-circle"></i><span class="tooltiptext">${t.discountRateTooltip}</span></span>`;
+            document.querySelector('.button-group button:first-child').innerHTML = `<i class="fas fa-calculator"></i> ${t.calculateButton}`;
+            document.querySelector('.button-group .button-secondary').innerHTML = `<i class="fas fa-redo"></i> ${t.resetButton}`;
+
+            // Metrics Column
+            document.querySelector('#extra h3').innerHTML = `<i class="fas fa-chart-bar"></i> ${t.stockMetrics}`;
+            document.querySelector('#extra p').textContent = t.metricsPlaceholder;
+
+            // Results Grid
+            document.querySelector('#pessimistic h3').innerHTML = `<i class="fas fa-frown"></i> ${t.pessimisticScenario}`;
+            document.querySelector('#pessimistic p').textContent = t.resultsPlaceholder;
+            document.querySelector('#result h3').innerHTML = `<i class="fas fa-chart-line"></i> ${t.baseScenario}`;
+            document.querySelector('#result p').textContent = t.enterValuesPlaceholder;
+            document.querySelector('#optimistic h3').innerHTML = `<i class="fas fa-smile"></i> ${t.optimisticScenario}`;
+            document.querySelector('#optimistic p').textContent = t.resultsPlaceholder;
+
+            // Recommendation Widget
+            document.querySelector('.recommendation-widget h2').innerHTML = `<i class="fas fa-bullhorn"></i> ${t.analystRecommendations}`;
+            document.querySelector('#analyst-recommendations-content p').textContent = t.recommendationsPlaceholder;
+
+            // Math Section
+            document.querySelector('#math p').textContent = t.preparingDetails;
+
+            // Update dynamically generated content if present (e.g., after calculation)
+            if (document.getElementById('metrics-grid').children.length > 0) {
+                updateMetricsDisplay(); // Re-render metrics with new language
+            }
+            if (document.getElementById('result').querySelector('.value-highlight')) {
+                 // Re-calculate and display results to apply new translations
+                 // This is a bit heavy, but ensures all dynamic text is updated.
+                 calculate();
+            }
+        }
+
+        function switchLanguage() {
+            isRussian = !isRussian;
+            translatePage();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('russianButton').addEventListener('click', switchLanguage);
+            document.getElementById('checklistButton').addEventListener('click', () => {
+                window.open('https://pavlolomakin.github.io/Invest.Checklist/', '_blank');
+            });
+            translatePage(); // Initial load to set default language (English)
+        });
 
         function formatMarketCap(marketCap) {
             if (!marketCap || marketCap === 0) return "N/A";
@@ -585,15 +809,33 @@
             if (isProGrowthMode) {
                 simpleInput.style.display = 'none';
                 perYearInputs.classList.add('active');
-                toggleButton.textContent = 'Basic';
+                toggleButton.textContent = isRussian ? translations.ru.basicButton : translations.en.basicButton;
             } else {
                 simpleInput.style.display = 'block';
                 perYearInputs.classList.remove('active');
-                toggleButton.textContent = 'Pro';
+                toggleButton.textContent = isRussian ? translations.ru.proButton : translations.en.proButton;
             }
         }
 
+        function showError(message) {
+            const resultDiv = document.getElementById("result");
+            const pessimisticDiv = document.getElementById("pessimistic");
+            const optimisticDiv = document.getElementById("optimistic");
+            const metricsGrid = document.getElementById("metrics-grid");
+            const mathDiv = document.getElementById("math");
+            const analystRecDiv = document.getElementById("analyst-recommendations-content");
+
+            resultDiv.innerHTML = `<h3><i class="fas fa-exclamation-triangle"></i> Error</h3><p style="color: var(--error-color);">${message}</p>`;
+            pessimisticDiv.innerHTML = `<h3><i class="fas fa-frown"></i> ${isRussian ? translations.ru.pessimisticScenario : translations.en.pessimisticScenario}</h3><p>${isRussian ? translations.ru.resultsPlaceholder : translations.en.resultsPlaceholder}</p>`;
+            optimisticDiv.innerHTML = `<h3><i class="fas fa-smile"></i> ${isRussian ? translations.ru.optimisticScenario : translations.en.optimisticScenario}</h3><p>${isRussian ? translations.ru.resultsPlaceholder : translations.en.resultsPlaceholder}</p>`;
+            metricsGrid.innerHTML = `<div class="metric-card"><p style="color: var(--error-color);">${isRussian ? "Ошибка" : "Error"}</p></div>`;
+            mathDiv.innerHTML = `<p style="color: var(--error-color);">${isRussian ? "Ошибка в расчете" : "Error in calculation details"}</p>`;
+            analystRecDiv.innerHTML = `<p style="color: var(--error-color);">${isRussian ? "Ошибка загрузки рекомендаций" : "Error loading recommendations"}</p>`;
+        }
+
+
         async function calculate() {
+            const t = translations[isRussian ? 'ru' : 'en'];
             const symbol = document.getElementById("symbol").value.toUpperCase();
             let userGrowthRate;
             let growthRatesPerYear = [];
@@ -603,7 +845,7 @@
                     const growthInput = document.getElementById(`growthYear${i}`);
                     const rate = parseFloat(growthInput.value) / 100;
                     if (isNaN(rate)) {
-                        showError(`Please enter a valid number for Year ${i} Growth Rate.`);
+                        showError(t.errorYearGrowthRate.replace('{year}', i));
                         return;
                     }
                     growthRatesPerYear.push(rate);
@@ -611,7 +853,7 @@
             } else {
                 userGrowthRate = parseFloat(document.getElementById("growth").value) / 100;
                 if (isNaN(userGrowthRate)) {
-                    showError("Please enter a valid number for Estimated Annual Growth Rate.");
+                    showError(t.errorInvalidGrowthRate);
                     return;
                 }
             }
@@ -620,11 +862,11 @@
             const discountRate = parseFloat(document.getElementById("discount").value) / 100;
 
             if (!symbol) {
-                showError("Please enter a stock symbol");
+                showError(t.errorSymbolMissing);
                 return;
             }
             if (isNaN(expectedPE) || isNaN(discountRate)) {
-                showError("Please enter valid numbers for all fields");
+                showError(t.errorInvalidNumbers);
                 return;
             }
 
@@ -635,12 +877,12 @@
             const mathDiv = document.getElementById("math");
             const analystRecDiv = document.getElementById("analyst-recommendations-content");
 
-            resultDiv.innerHTML = `<h3><i class="fas fa-chart-line"></i> Base Scenario</h3><p><i class="fas fa-spinner fa-spin"></i> Loading data for ${symbol}...</p>`;
-            pessimisticDiv.innerHTML = `<h3><i class="fas fa-frown"></i> Pessimistic Scenario</h3><p><i class="fas fa-spinner fa-spin"></i> Calculating...</p>`;
-            optimisticDiv.innerHTML = `<h3><i class="fas fa-smile"></i> Optimistic Scenario</h3><p><i class="fas fa-spinner fa-spin"></i> Calculating...</p>`;
-            metricsGrid.innerHTML = '<div class="metric-card"><i class="fas fa-spinner fa-spin"></i> Loading metrics...</div>';
-            mathDiv.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Preparing calculation details...</p>';
-            analystRecDiv.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Loading recommendations...</p>';
+            resultDiv.innerHTML = `<h3><i class="fas fa-chart-line"></i> ${t.baseScenario}</h3><p><i class="fas fa-spinner fa-spin"></i> ${t.loadingData} ${symbol}...</p>`;
+            pessimisticDiv.innerHTML = `<h3><i class="fas fa-frown"></i> ${t.pessimisticScenario}</h3><p><i class="fas fa-spinner fa-spin"></i> ${t.calculating}</p>`;
+            optimisticDiv.innerHTML = `<h3><i class="fas fa-smile"></i> ${t.optimisticScenario}</h3><p><i class="fas fa-spinner fa-spin"></i> ${t.calculating}</p>`;
+            metricsGrid.innerHTML = `<div class="metric-card"><i class="fas fa-spinner fa-spin"></i> ${t.loadingMetrics}</div>`;
+            mathDiv.innerHTML = `<p><i class="fas fa-spinner fa-spin"></i> ${t.preparingDetails}</p>`;
+            analystRecDiv.innerHTML = `<p><i class="fas fa-spinner fa-spin"></i> ${t.loadingRecommendations}</p>`;
 
             try {
                 const [profileRes, quoteRes, metricsRes, recommendationRes] = await Promise.all([
@@ -656,7 +898,7 @@
                 const recommendations = await recommendationRes.json();
 
                 if (!profile || !quote || !metrics || !quote.c || !metrics.metric || !metrics.metric["epsTTM"]) {
-                    showError("Could not fetch complete data for this symbol. Please ensure the symbol is correct and try again.");
+                    showError(t.errorInvalidSymbol);
                     return;
                 }
 
@@ -712,168 +954,142 @@
                 const optimisticUpside = price > 0 ? ((optimistic.intrinsicValue - price) / price * 100).toFixed(2) : "N/A";
 
                 resultDiv.innerHTML = `
-                    <h3><i class="fas fa-chart-line"></i> ${profile.name || symbol} - Base Scenario</h3>
-                    <p>Expected P/E: <strong>${expectedPE}</strong></p>
-                    <p>Growth Rate: <strong>${isProGrowthMode ? 'Per Year' : (userGrowthRate * 100).toFixed(2) + '%'}</strong></p>
-                    <p>Discount Rate: <strong>${(discountRate * 100).toFixed(2)}%</strong></p>
+                    <h3><i class="fas fa-chart-line"></i> ${profile.name || symbol} - ${t.baseScenario}</h3>
+                    <p>${t.expectedPEText}: <strong>${expectedPE}</strong></p>
+                    <p>${t.growthRateText}: <strong>${isProGrowthMode ? t.perYearText : (userGrowthRate * 100).toFixed(2) + '%'}</strong></p>
+                    <p>${t.discountRateText}: <strong>${(discountRate * 100).toFixed(2)}%</strong></p>
                     <div class="value-highlight ${baseUpside >= 0 ? 'positive' : 'negative'}">
                         <strong>$${base.intrinsicValue.toFixed(2)}</strong><br>
-                        ${baseUpside >= 0 ? 'Upside' : 'Downside'}: ${Math.abs(baseUpside)}%
+                        ${baseUpside >= 0 ? t.upside : t.downside}: ${Math.abs(baseUpside)}%
                     </div>
                     <p style="font-size: 0.9rem; color: var(--text-light);">
-                        Current Price: $${price.toFixed(2)}
+                        ${t.currentPriceText}: $${price.toFixed(2)}
                     </p>
                 `;
 
                 pessimisticDiv.innerHTML = `
-                    <h3><i class="fas fa-frown"></i> Pessimistic Scenario</h3>
-                    <p>Growth Rate: <strong>${isProGrowthMode ? 'Per Year (Adjusted)' : ((userGrowthRate - 0.02) * 100).toFixed(2) + '%'}</strong></p>
-                    <p>Future P/E: <strong>${expectedPE - 2}</strong></p>
+                    <h3><i class="fas fa-frown"></i> ${t.pessimisticScenario}</h3>
+                    <p>${t.growthRateText}: <strong>${isProGrowthMode ? `${t.perYearText} ${t.adjusted}` : ((userGrowthRate - 0.02) * 100).toFixed(2) + '%'}</strong></p>
+                    <p>${t.futurePE}: <strong>${Math.max(1, expectedPE - 2)}</strong></p>
                     <div class="value-highlight ${pessimisticUpside >= 0 ? 'positive' : 'negative'}" style="font-size: 1.2rem;">
                         <strong>$${pessimistic.intrinsicValue.toFixed(2)}</strong><br>
-                        ${pessimisticUpside >= 0 ? 'Upside' : 'Downside'}: ${Math.abs(pessimisticUpside)}%
+                        ${pessimisticUpside >= 0 ? t.upside : t.downside}: ${Math.abs(pessimisticUpside)}%
                     </div>
                 `;
 
                 optimisticDiv.innerHTML = `
-                    <h3><i class="fas fa-smile"></i> Optimistic Scenario</h3>
-                    <p>Growth Rate: <strong>${isProGrowthMode ? 'Per Year (Adjusted)' : ((userGrowthRate + 0.02) * 100).toFixed(2) + '%'}</strong></p>
-                    <p>Future P/E: <strong>${expectedPE + 2}</strong></p>
+                    <h3><i class="fas fa-smile"></i> ${t.optimisticScenario}</h3>
+                    <p>${t.growthRateText}: <strong>${isProGrowthMode ? `${t.perYearText} ${t.adjusted}` : ((userGrowthRate + 0.02) * 100).toFixed(2) + '%'}</strong></p>
+                    <p>${t.futurePE}: <strong>${expectedPE + 2}</strong></p>
                     <div class="value-highlight ${optimisticUpside >= 0 ? 'positive' : 'negative'}" style="font-size: 1.2rem;">
                         <strong>$${optimistic.intrinsicValue.toFixed(2)}</strong><br>
-                        ${optimisticUpside >= 0 ? 'Upside' : 'Downside'}: ${Math.abs(optimisticUpside)}%
+                        ${optimisticUpside >= 0 ? t.upside : t.downside}: ${Math.abs(optimisticUpside)}%
                     </div>
                 `;
 
                 const marketCapFormatted = formatMarketCap(marketCap);
                 metricsGrid.innerHTML = `
                     <div class="metric-card">
-                        <h4>Current Price</h4>
+                        <h4>${t.currentPrice}</h4>
                         <p>$${price.toFixed(2)}</p>
                     </div>
                     <div class="metric-card">
-                        <h4>Market Cap, M</h4>
+                        <h4>${t.marketCap}</h4>
                         <p>${marketCapFormatted}</p>
                     </div>
                     <div class="metric-card">
-                        <h4>P/E Ratio</h4>
+                        <h4>${t.peRatio}</h4>
                         <p>${currentPE}</p>
                     </div>
                     <div class="metric-card">
-                        <h4>Forward P/E</h4>
+                        <h4>${t.forwardPE}</h4>
                         <p>${forwardPE}</p>
                     </div>
                     <div class="metric-card">
-                        <h4>52-Week Range</h4>
+                        <h4>${t.week52Range}</h4>
                         <p>$${week52Low.toFixed(2)} - $${week52High.toFixed(2)}</p>
                     </div>
                     <div class="metric-card">
-                        <h4>EPS (TTM)</h4>
+                        <h4>${t.epsTTM}</h4>
                         <p>$${eps.toFixed(2)}</p>
                     </div>
                     <div class="metric-card">
-                        <h4>Dividend Yield</h4>
+                        <h4>${t.dividendYield}</h4>
                         <p>${dividendYield}%</p>
                     </div>
                     <div class="metric-card">
-                        <h4>Industry</h4>
+                        <h4>${t.industry}</h4>
                         <p>${profile.finnhubIndustry || 'N/A'}</p>
                     </div>
                 `;
 
-                let mathContent = `Valuation Formula (for Base Scenario):
+                let mathContent = `${t.valuationFormula}
 
-EPS: $${eps.toFixed(2)} | Growth: ${isProGrowthMode ? 'Per Year: [' + growthRatesPerYear.map(r => (r * 100).toFixed(2) + '%').join(', ') + ']' : (userGrowthRate * 100).toFixed(2) + '%'} | Discount: ${(discountRate * 100).toFixed(2)}% | Future P/E: ${expectedPE} | Years: ${years}
+${t.eps}: $${eps.toFixed(2)} | ${t.growth}: ${isProGrowthMode ? `${t.perYearText}: [` + growthRatesPerYear.map(r => (r * 100).toFixed(2) + '%').join(', ') + ']' : (userGrowthRate * 100).toFixed(2) + '%'} | ${t.discount}: ${(discountRate * 100).toFixed(2)}% | ${t.futurePEshort}: ${expectedPE} | ${t.years}: ${years}
 
-Step 1: Future EPS (EPS × (1+G)^t):
-Y1: $${base.futureEPSValues[0]} | Y2: $${base.futureEPSValues[1]} | Y3: $${base.futureEPSValues[2]} | Y4: $${base.futureEPSValues[3]} | Y5: $${base.futureEPSValues[4]}
+${t.step1}
+`;
+                for (let i = 0; i < years; i++) {
+                    mathContent += `Y${i+1}: $${base.futureEPSValues[i]}\n`;
+                }
 
-Step 2: Discounted EPS (Future EPS / (1+D)^t):
-PV Y1: $${base.discountedFutureValues[0]} | PV Y2: $${base.discountedFutureValues[1]} | PV Y3: $${base.discountedFutureValues[2]} | PV Y4: $${base.discountedFutureValues[3]} | PV Y5: $${base.discountedFutureValues[4]}
+                mathContent += `\n${t.step2}
+`;
+                for (let i = 0; i < years; i++) {
+                    mathContent += `Y${i+1}: $${base.discountedFutureValues[i]}\n`;
+                }
 
-Step 3: Terminal Value (TV) at Year ${years}:
-Terminal EPS = $${base.terminalEPS}
-TV = Terminal EPS × Future P/E = $${base.terminalValue}
+                mathContent += `\n${t.step3}
+Terminal EPS: $${base.terminalEPS}
+Terminal Value = Terminal EPS × Future P/E = $${base.terminalEPS} × ${expectedPE} = $${base.terminalValue}
 
-Step 4: Discounted Terminal Value:
-Disc. TV = TV / (1+D)^${years} = $${base.discountedTerminal}
+${t.step4}
+Discounted Terminal Value = Terminal Value / (1 + Discount Rate)^Years = $${base.terminalValue} / (1 + ${discountRate.toFixed(2)})^${years} = $${base.discountedTerminal}
 
-Step 5: Sum all Discounted Values:
-Intrinsic Value = (Sum PV Y1-${years}) + Disc. TV = $${base.intrinsicValue.toFixed(2)}`;
+${t.step5}
+Intrinsic Value = ${base.discountedFutureValues.join(' + ')} + $${base.discountedTerminal} = $${base.intrinsicValue.toFixed(2)}
+`;
+                mathDiv.innerHTML = `<pre>${mathContent}</pre>`;
 
-                mathDiv.textContent = mathContent;
 
                 if (recommendations && recommendations.length > 0) {
-                    const latest = recommendations[0];
-                    analystRecDiv.innerHTML = `
-                        <p><strong>Period:</strong> ${latest.period || 'N/A'}</p>
-                        <div class="analyst-recommendations-grid">
-                            <span><strong>Buy:</strong> ${latest.buy || 0}</span>
-                            <span><strong>Hold:</strong> ${latest.hold || 0}</span>
-                            <span><strong>Sell:</strong> ${latest.sell || 0}</span>
-                        </div>
-                    `;
+                    const latestRec = recommendations[0];
+                    let recDisplay = `<div class="analyst-recommendations-grid">`;
+                    recDisplay += `<span><strong>${t.buy}:</strong> ${latestRec.buy}</span>`;
+                    recDisplay += `<span><strong>${t.hold}:</strong> ${latestRec.hold}</span>`;
+                    recDisplay += `<span><strong>${t.sell}:</strong> ${latestRec.sell}</span>`;
+                    recDisplay += `<span><strong>${t.strongBuy}:</strong> ${latestRec.strongBuy}</span>`;
+                    recDisplay += `<span><strong>${t.strongSell}:</strong> ${latestRec.strongSell}</span>`;
+                    recDisplay += `</div>`;
+                    analystRecDiv.innerHTML = recDisplay;
                 } else {
-                    analystRecDiv.innerHTML = '<p>No analyst recommendations available.</p>';
+                    analystRecDiv.innerHTML = `<p>${t.recommendationsPlaceholder}</p>`;
                 }
 
             } catch (error) {
-                showError("Error fetching data. Please check the stock symbol and your internet connection.");
-                console.error("Calculation error:", error);
-                analystRecDiv.innerHTML = '<p style="color: var(--error-color);">Error loading recommendations.</p>';
+                console.error("Error calculating intrinsic value:", error);
+                showError(`${t.errorInvalidSymbol} (${error.message})`);
             }
         }
 
         function resetFields() {
             document.getElementById("symbol").value = "";
             document.getElementById("growth").value = "";
+            document.getElementById("pe").value = "";
+            document.getElementById("discount").value = "";
             for (let i = 1; i <= years; i++) {
                 document.getElementById(`growthYear${i}`).value = "";
             }
-            document.getElementById("pe").value = "";
-            document.getElementById("discount").value = "";
 
-            document.getElementById("result").innerHTML = `
-                <h3><i class="fas fa-chart-line"></i> Base Scenario</h3>
-                <p>Enter values and click "Calculate" to see results</p>
-            `;
-            document.getElementById("pessimistic").innerHTML = `
-                <h3><i class="fas fa-frown"></i> Pessimistic Scenario</h3>
-                <p>Results will appear here after calculation</p>
-            `;
-            document.getElementById("optimistic").innerHTML = `
-                <h3><i class="fas fa-smile"></i> Optimistic Scenario</h3>
-                <p>Results will appear here after calculation</p>
-            `;
-            document.getElementById("metrics-grid").innerHTML = `
-                <p>Enter a stock symbol and click "Calculate" to view metrics</p>
-            `;
-            document.getElementById("math").innerHTML = `
-                <p>Calculation details will appear here after you run the analysis.</p>
-            `;
-            document.getElementById("analyst-recommendations-content").innerHTML = `
-                <p>Enter a stock symbol and click "Calculate" to view analyst recommendations.</p>
-            `;
-            if (isProGrowthMode) {
-                toggleGrowthInputMode();
-            }
-        }
-
-        function showError(message) {
-            document.getElementById("result").innerHTML = `
-                <h3><i class="fas fa-exclamation-triangle"></i> Error</h3>
-                <p style="color: var(--error-color);">${message}</p>
-            `;
-            document.getElementById("pessimistic").innerHTML = "";
-            document.getElementById("optimistic").innerHTML = "";
-            document.getElementById("metrics-grid").innerHTML = `
-                <div class="metric-card" style="grid-column: 1 / -1;">
-                    <p style="color: var(--error-color);"><i class="fas fa-exclamation-triangle"></i> ${message}</p>
-                </div>
-            `;
-            document.getElementById("math").innerHTML = "";
-            document.getElementById("analyst-recommendations-content").innerHTML = `<p style="color: var(--error-color);">Error loading recommendations.</p>`;
+            const t = translations[isRussian ? 'ru' : 'en'];
+            document.getElementById("result").innerHTML = `<h3><i class="fas fa-chart-line"></i> ${t.baseScenario}</h3><p>${t.enterValuesPlaceholder}</p>`;
+            document.getElementById("pessimistic").innerHTML = `<h3><i class="fas fa-frown"></i> ${t.pessimisticScenario}</h3><p>${t.resultsPlaceholder}</p>`;
+            document.getElementById("optimistic").innerHTML = `<h3><i class="fas fa-smile"></i> ${t.optimisticScenario}</h3><p>${t.resultsPlaceholder}</p>`;
+            document.getElementById("metrics-grid").innerHTML = `<p>${t.metricsPlaceholder}</p>`;
+            document.getElementById("math").innerHTML = `<p>${t.preparingDetails.replace('...', '.')}</p>`; // Simpler phrasing for reset
+            document.getElementById("analyst-recommendations-content").innerHTML = `<p>${t.recommendationsPlaceholder}</p>`;
         }
     </script>
 </body>
 </html>
+```
