@@ -48,11 +48,21 @@
         }
 
         .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             color: white;
             padding: 25px 30px;
-            text-align: center;
             border-bottom: 1px solid rgba(255,255,255,0.1);
+            flex-wrap: wrap;
+            position: relative;
+        }
+
+        .header-content {
+            text-align: center;
+            flex-grow: 1;
+            padding-right: 20px;
         }
 
         .header h1 {
@@ -63,7 +73,6 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
-            flex-wrap: wrap; /* Allow wrapping for title and button */
         }
 
         .header p {
@@ -74,22 +83,28 @@
         }
 
         .pro-button-header {
-            margin-left: 20px; /* Space from the title */
-            padding: 4px 8px; /* Slightly more padding for better appearance */
-            font-size: 0.7rem; /* Smaller font */
-            min-width: unset; /* Override any min-width from other button styles */
-            background-color: rgba(255, 255, 255, 0.2); /* Semi-transparent white */
-            color: white; /* White text */
-            border: 1px solid rgba(255, 255, 255, 0.5); /* Subtle white border */
-            border-radius: 9999px; /* Pill shape */
-            transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 4px 8px;
+            font-size: 0.7rem;
+            background-color: var(--dark-grey);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            width: 40px; /* Fixed width to make it narrow */
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .pro-button-header:hover {
-            background-color: rgba(255, 255, 255, 0.3); /* Slightly more opaque on hover */
-            box-shadow: none; /* Remove previous shadow */
+            background-color: var(--dark-grey-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
         }
-
 
         .content {
             padding: 25px 30px;
@@ -391,7 +406,7 @@
         }
 
         .per-year-growth-inputs {
-            display: none; /* Hidden by default */
+            display: none;
         }
         .per-year-growth-inputs.active {
             display: block;
@@ -401,10 +416,11 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1><i class="fas fa-calculator"></i> Intrinsic Value Calculator
-                <button id="toggleGrowthMode" onclick="toggleGrowthInputMode()" class="pro-button-header">Pro</button>
-            </h1>
-            <p>Calculate the fair value of stocks based on fundamental analysis</p>
+            <div class="header-content">
+                <h1><i class="fas fa-calculator"></i> Intrinsic Value Calculator</h1>
+                <p>Calculate the fair value of stocks based on fundamental analysis</p>
+            </div>
+            <button id="toggleGrowthMode" onclick="toggleGrowthInputMode()" class="pro-button-header">Pro</button>
         </div>
 
         <div class="content">
@@ -569,7 +585,7 @@
             if (isProGrowthMode) {
                 simpleInput.style.display = 'none';
                 perYearInputs.classList.add('active');
-                toggleButton.textContent = 'Simple';
+                toggleButton.textContent = 'Basic';
             } else {
                 simpleInput.style.display = 'block';
                 perYearInputs.classList.remove('active');
@@ -838,9 +854,8 @@ Intrinsic Value = (Sum PV Y1-${years}) + Disc. TV = $${base.intrinsicValue.toFix
             document.getElementById("analyst-recommendations-content").innerHTML = `
                 <p>Enter a stock symbol and click "Calculate" to view analyst recommendations.</p>
             `;
-            // Ensure the growth input mode is reset to simple
             if (isProGrowthMode) {
-                toggleGrowthInputMode(); // Toggle back to simple mode if currently in pro mode
+                toggleGrowthInputMode();
             }
         }
 
