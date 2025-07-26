@@ -1006,29 +1006,58 @@
         }
 
         function displayLoadingState() {
-            const symbol = document.getElementById('symbol').value.toUpperCase();
-            const t = translations[isRussian ? 'ru' : 'en'];
+    const symbol = document.getElementById('symbol').value.toUpperCase();
+    const t = translations[isRussian ? 'ru' : 'en'];
 
-            document.getElementById('extra p').textContent = `${t.loadingMetrics}...`;
-            document.getElementById('metrics-grid').innerHTML = '';
-            document.getElementById('analyst-recommendations-content').innerHTML = `<p>${t.loadingMetrics}...</p>`;
+    // Safely update elements only if they exist
+    const extraP = document.getElementById('extra')?.querySelector('p');
+    if (extraP) extraP.textContent = `${t.loadingMetrics}...`;
+    
+    const metricsGrid = document.getElementById('metrics-grid');
+    if (metricsGrid) metricsGrid.innerHTML = '';
+    
+    const analystContent = document.getElementById('analyst-recommendations-content');
+    if (analystContent) analystContent.innerHTML = `<p>${t.loadingMetrics}...</p>`;
 
-            document.getElementById('result').innerHTML = `<h3><i class="fas fa-chart-line"></i> ${t.baseScenario}</h3><p>${t.calculating}...</p>`;
-            document.getElementById('pessimistic').innerHTML = `<h3><i class="fas fa-frown"></i> ${t.pessimisticScenario}</h3><p>${t.calculating}...</p>`;
-            document.getElementById('optimistic').innerHTML = `<h3><i class="fas fa-smile"></i> ${t.optimisticScenario}</h3><p>${t.calculating}...</p>`;
-            document.getElementById('math').innerHTML = `<p>${t.preparingDetails}</p>`;
-        }
+    // Safely update results sections
+    const resultEl = document.getElementById('result');
+    if (resultEl) resultEl.innerHTML = `<h3><i class="fas fa-chart-line"></i> ${t.baseScenario}</h3><p>${t.calculating}...</p>`;
+    
+    const pessimisticEl = document.getElementById('pessimistic');
+    if (pessimisticEl) pessimisticEl.innerHTML = `<h3><i class="fas fa-frown"></i> ${t.pessimisticScenario}</h3><p>${t.calculating}...</p>`;
+    
+    const optimisticEl = document.getElementById('optimistic');
+    if (optimisticEl) optimisticEl.innerHTML = `<h3><i class="fas fa-smile"></i> ${t.optimisticScenario}</h3><p>${t.calculating}...</p>`;
+    
+    const mathEl = document.getElementById('math');
+    if (mathEl) mathEl.innerHTML = `<p>${t.preparingDetails}</p>`;
+}
+
 
         function displayError(message) {
-            const t = translations[isRussian ? 'ru' : 'en'];
-            document.getElementById('result').innerHTML = `<h3><i class="fas fa-exclamation-triangle"></i> Error</h3><p style="color: var(--error-color);">${message}</p>`;
-            document.getElementById('pessimistic').innerHTML = `<h3><i class="fas fa-frown"></i> ${t.pessimisticScenario}</h3><p style="color: var(--error-color);">${message}</p>`;
-            document.getElementById('optimistic').innerHTML = `<h3><i class="fas fa-smile"></i> ${t.optimisticScenario}</h3><p style="color: var(--error-color);">${message}</p>`;
-            document.getElementById('analyst-recommendations-content').innerHTML = `<p style="color: var(--error-color);">${message}</p>`;
-            document.getElementById('metrics-grid').innerHTML = '';
-            document.getElementById('extra p').textContent = t.metricsPlaceholder; // Reset placeholder
-            document.getElementById('math').innerHTML = `<p>${t.preparingDetails}</p>`;
-        }
+    const t = translations[isRussian ? 'ru' : 'en'];
+    
+    const resultEl = document.getElementById('result');
+    if (resultEl) resultEl.innerHTML = `<h3><i class="fas fa-exclamation-triangle"></i> Error</h3><p style="color: var(--error-color);">${message}</p>`;
+    
+    const pessimisticEl = document.getElementById('pessimistic');
+    if (pessimisticEl) pessimisticEl.innerHTML = `<h3><i class="fas fa-frown"></i> ${t.pessimisticScenario}</h3><p style="color: var(--error-color);">${message}</p>`;
+    
+    const optimisticEl = document.getElementById('optimistic');
+    if (optimisticEl) optimisticEl.innerHTML = `<h3><i class="fas fa-smile"></i> ${t.optimisticScenario}</h3><p style="color: var(--error-color);">${message}</p>`;
+    
+    const analystContent = document.getElementById('analyst-recommendations-content');
+    if (analystContent) analystContent.innerHTML = `<p style="color: var(--error-color);">${message}</p>`;
+    
+    const metricsGrid = document.getElementById('metrics-grid');
+    if (metricsGrid) metricsGrid.innerHTML = '';
+    
+    const extraP = document.getElementById('extra')?.querySelector('p');
+    if (extraP) extraP.textContent = t.metricsPlaceholder;
+    
+    const mathEl = document.getElementById('math');
+    if (mathEl) mathEl.innerHTML = `<p>${t.preparingDetails}</p>`;
+}
 
 
         function updateMetricsDisplay(symbol, currentPrice, marketCap, peRatio, forwardPE, week52High, week52Low, epsTTM, dividendYield, industry) {
