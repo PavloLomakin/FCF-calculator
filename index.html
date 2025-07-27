@@ -548,11 +548,10 @@
     </div>
 
     <script>
-    const FINNHUB_API_KEY = "d0kuab9r01qhb02558rgd0kuab9r01qhb02558s0";
-    const ALPHA_VANTAGE_API_KEY = "KRPV51NPN2WY4REU"; // Your backup API key
-    const years = 5;
-    let isProGrowthMode = false;
-    let isRussian = false; // New state variable for language
+        const API_KEY = "d0kuab9r01qhb02558rgd0kuab9r01qhb02558s0";
+        const years = 5;
+        let isProGrowthMode = false;
+        let isRussian = false; // New state variable for language
 
         // Translations object
         const translations = {
@@ -832,106 +831,61 @@
         }
 
 
-        async function calculate() {
-    const t = translations[isRussian ? 'ru' : 'en'];
-    const symbol = document.getElementById("symbol").value.toUpperCase();
-    let userGrowthRate;
-    let growthRatesPerYear = [];
+        // UPDATED Calculate Function
+    async function calculate() {
+        const t = translations[isRussian ? 'ru' : 'en'];
+        const symbol = document.getElementById("symbol").value.toUpperCase();
+        let userGrowthRate;
+        let growthRatesPerYear = [];
 
-    // Validate growth rate inputs
-    if (isProGrowthMode) {
-        for (let i = 1; i <= years; i++) {
-            const growthInput = document.getElementById(`growthYear${i}`);
-            const rate = parseFloat(growthInput.value) / 100;
-            if (isNaN(rate)) {
-                showError(t.errorYearGrowthRate.replace('{year}', i));
+        // Validate inputs
+        if (isProGrowthMode) {
+            for (let i = 1; i <= years; i++) {
+                const growthInput = document.getElementById(`growthYear${i}`);
+                const rate = parseFloat(growthInput.value) / 100;
+                if (isNaN(rate)) {
+                    showError(t.errorYearGrowthRate.replace('{year}', i));
+                    return;
+                }
+                growthRatesPerYear.push(rate);
+            }
+        } else {
+            userGrowthRate = parseFloat(document.getElementById("growth").value) / 100;
+            if (isNaN(userGrowthRate)) {
+                showError(t.errorInvalidGrowthRate);
                 return;
             }
-            growthRatesPerYear.push(rate);
         }
-    } else {
-        userGrowthRate = parseFloat(document.getElementById("growth").value) / 100;
-        if (isNaN(userGrowthRate)) {
-            showError(t.errorInvalidGrowthRate);
+
+        const expectedPE = parseFloat(document.getElementById("pe").value);
+        const discountRate = parseFloat(document.getElementById("discount").value) / 100;
+
+        if (!symbol) {
+            showError(t.errorSymbolMissing);
             return;
         }
-    }
-
-             const expectedPE = parseFloat(document.getElementById("pe").value);
-    const discountRate = parseFloat(document.getElementById("discount").value) / 100;
-
-    if (!symbol) {
-        showError(t.errorSymbolMissing);
-        return;
-    }
-    if (isNaN(expectedPE) || isNaN(discountRate)) {
-        showError(t.errorInvalidNumbers);
-        return;
-    }
-             updateLoadingUI(t, symbol);
-            
-            const resultDiv = document.getElementById("result");
-            const pessimisticDiv = document.getElementById("pessimistic");
-            const optimisticDiv = document.getElementById("optimistic");
-            const metricsGrid = document.getElementById("metrics-grid");
-            const mathDiv = document.getElementById("math");
-            const analystRecDiv = document.getElementById("analyst-recommendations-content");
-            const stockData = await fetchStockData(symbol);
-        const { profile, quote, metrics, recommendations, source } = stockData;
-
-            resultDiv.innerHTML = `<h3><i class="fas fa-chart-line"></i> ${t.baseScenario}</h3><p><i class="fas fa-spinner fa-spin"></i> ${t.loadingData} ${symbol}...</p>`;
-            pessimisticDiv.innerHTML = `<h3><i class="fas fa-frown"></i> ${t.pessimisticScenario}</h3><p><i class="fas fa-spinner fa-spin"></i> ${t.calculating}</p>`;
-            optimisticDiv.innerHTML = `<h3><i class="fas fa-smile"></i> ${t.optimisticScenario}</h3><p><i class="fas fa-spinner fa-spin"></i> ${t.calculating}</p>`;
-            metricsGrid.innerHTML = `<div class="metric-card"><i class="fas fa-spinner fa-spin"></i> ${t.loadingMetrics}</div>`;
-            mathDiv.innerHTML = `<p><i class="fas fa-spinner fa-spin"></i> ${t.preparingDetails}</p>`;
-            analystRecDiv.innerHTML = `<p><i class="fas fa-spinner fa-spin"></i> ${t.loadingRecommendations}</p>`;
-
-            try {
-                const [profileRes, quoteRes, metricsRes, recommendationRes] = await Promise.all([
-                    fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${API_KEY}`),
-                    fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${API_KEY}`),
-                    fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${API_KEY}`),
-                    fetch(`https://finnhub.io/api/v1/stock/recommendation?symbol=${symbol}&token=${API_KEY}`)
-                ]);
-
-                const profile = await profileRes.json();
-                const quote = await quoteRes.json();
-                const metrics = await metricsRes.json();
-                const recommendations = await recommendationRes.json();
-
-                if (!profile || !quote || !metrics || !quote.c || !metrics.metric || !metrics.metric["epsTTM"]) {
-                    showError(t.errorInvalidSymbol);
-                    try {
-        // Fetch data (automatically falls back to Alpha Vantage if Finnhub fails)
-        const stockData = await fetchStockData(symbol);
-        const { profile, quote, metrics, recommendations, source } = stockData;
-
-        // Show API source warning if needed
-        if (source === "alpha_vantage") {
-            showBackupWarning();
+        if (isNaN(expectedPE) || isNaN(discountRate)) {
+            showError(t.errorInvalidNumbers);
+            return;
         }
 
-        // Process and display results
-        displayResults({
-            profile,
-            quote,
-            metrics,
-            recommendations,
-            isProGrowthMode,
-            growthRatesPerYear,
-            userGrowthRate,
-            expectedPE,
-            discountRate,
-            years,
-            t
-        });
+        // Show loading states
+        const resultDiv = document.getElementById("result");
+        resultDiv.innerHTML = `<h3><i class="fas fa-chart-line"></i> ${t.baseScenario}</h3><p><i class="fas fa-spinner fa-spin"></i> ${t.loadingData} ${symbol}...</p>`;
+        // ... [similar loading states for other elements] ...
 
-    } catch (error) {
-        console.error("Calculation error:", error);
-        showError(`${t.errorInvalidSymbol} (${error.message})`);
-    }
-}
-                }
+        try {
+            const stockData = await fetchStockData(symbol);
+            const { profile, quote, metrics, recommendations, source } = stockData;
+
+            // Show backup warning if needed
+            if (source === "alpha_vantage") {
+                const warning = document.createElement('div');
+                warning.innerHTML = `<p style="color: var(--warning-color); margin-bottom: 15px;">
+                    <i class="fas fa-exclamation-triangle"></i> Using backup data source (Alpha Vantage)
+                </p>`;
+                resultDiv.prepend(warning);
+            }
 
                 const eps = metrics.metric["epsTTM"] || 0;
                 const price = quote.c || 0;
@@ -1120,40 +1074,100 @@ Intrinsic Value = ${base.discountedFutureValues.join(' + ')} + $${base.discounte
             document.getElementById("math").innerHTML = `<p>${t.preparingDetails.replace('...', '.')}</p>`; // Simpler phrasing for reset
             document.getElementById("analyst-recommendations-content").innerHTML = `<p>${t.recommendationsPlaceholder}</p>`;
         }
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('russianButton').addEventListener('click', switchLanguage);
+        document.getElementById('checklistButton').addEventListener('click', () => {
+            window.open('https://pavlolomakin.github.io/Invest.Checklist/', '_blank');
+        });
+        translatePage();
+    });
 
-        // Helper function to update UI during loading
-function updateLoadingUI(t, symbol) {
-    document.getElementById("result").innerHTML = `
-        <h3><i class="fas fa-chart-line"></i> ${t.baseScenario}</h3>
-        <p><i class="fas fa-spinner fa-spin"></i> ${t.loadingData} ${symbol}...</p>
-    `;
-    // ... similar updates for other UI elements ...
-}
+    // NEW: Primary/Fallback API Handler
+    async function fetchStockData(symbol) {
+        try {
+            // Try Finnhub first
+            const [profileRes, quoteRes, metricsRes, recommendationRes] = await Promise.all([
+                fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${FINNHUB_API_KEY}`),
+                fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`),
+                fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${FINNHUB_API_KEY}`),
+                fetch(`https://finnhub.io/api/v1/stock/recommendation?symbol=${symbol}&token=${FINNHUB_API_KEY}`)
+            ]);
 
-// Helper function to show backup API warning
-function showBackupWarning() {
-    const warning = document.createElement('div');
-    warning.innerHTML = `
-        <p style="color: var(--warning-color); margin-bottom: 15px;">
-            <i class="fas fa-exclamation-triangle"></i> Using backup data source (Alpha Vantage)
-        </p>
-    `;
-    document.getElementById("result").prepend(warning);
-}
+            if (!profileRes.ok || !quoteRes.ok || !metricsRes.ok || !recommendationRes.ok) {
+                throw new Error("Finnhub API error");
+            }
 
-// Helper function to display final results
-function displayResults(data) {
-    const {
-        profile, quote, metrics, recommendations,
-        isProGrowthMode, growthRatesPerYear, userGrowthRate,
-        expectedPE, discountRate, years, t
-    } = data;
+            const [profile, quote, metrics, recommendations] = await Promise.all([
+                profileRes.json(),
+                quoteRes.json(),
+                metricsRes.json(),
+                recommendationRes.json()
+            ]);
 
-    const eps = metrics.metric["epsTTM"] || 0;
-    const price = quote.c || 0;
-    
-    // ... rest of your existing results display logic ...
-    // (Keep all your current calculation and UI update code here)
+            if (!profile || !quote || !metrics || !quote.c) {
+                throw new Error("Incomplete Finnhub data");
+            }
+
+            return { profile, quote, metrics, recommendations, source: "finnhub" };
+            
+        } catch (finnhubError) {
+            console.warn("Finnhub failed, trying Alpha Vantage...");
+            
+            try {
+                // Fallback to Alpha Vantage
+                const [overviewRes, quoteRes] = await Promise.all([
+                    fetch(`https://www.alphavantage.co/query?function=OVERVIEW&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`),
+                    fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`)
+                ]);
+                
+                if (!overviewRes.ok || !quoteRes.ok) {
+                    throw new Error("Alpha Vantage API error");
+                }
+                
+                const [overview, quote] = await Promise.all([
+                    overviewRes.json(),
+                    quoteRes.json()
+                ]);
+                
+                if (overview.Note || quote.Note) {
+                    throw new Error("Alpha Vantage rate limit reached");
+                }
+                
+                if (!overview || !quote["Global Quote"] || !quote["Global Quote"]["05. price"]) {
+                    throw new Error("Incomplete Alpha Vantage data");
+                }
+                
+                // Normalize Alpha Vantage data to match Finnhub format
+                return {
+                    profile: {
+                        name: overview.Name || symbol,
+                        finnhubIndustry: overview.Industry || "N/A"
+                    },
+                    quote: {
+                        c: parseFloat(quote["Global Quote"]["05. price"]),
+                        h: parseFloat(overview["52WeekHigh"] || 0),
+                        l: parseFloat(overview["52WeekLow"] || 0)
+                    },
+                    metrics: {
+                        metric: {
+                            epsTTM: parseFloat(overview.EPSTTM) || 0,
+                            peExclExtraTTM: parseFloat(overview.ForwardPE) || 0,
+                            dividendYieldIndicatedAnnual: parseFloat(overview.DividendYield) || 0,
+                            marketCapitalization: parseFloat(overview.MarketCapitalization) || 0,
+                            shareOutstanding: parseFloat(overview.SharesOutstanding) || 0
+                        }
+                    },
+                    recommendations: [],
+                    source: "alpha_vantage"
+                };
+                
+            } catch (alphaError) {
+                console.error("Both APIs failed:", alphaError);
+                throw new Error("Could not fetch stock data from any source");
+            }
+        }
+    }
+
     </script>
 </body>
 </html>
